@@ -1,0 +1,153 @@
+import { supabase } from './supabaseClient';
+import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
+
+export class ProjectService {
+  // Get all projects for a user
+  static async getUserProjects(walletAddress: string): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('wallet_address', walletAddress)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user projects:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  // Get all projects (for browsing)
+  static async getAllProjects(): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching all projects:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  // Get a single project by ID
+  static async getProject(id: string): Promise<Project | null> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // Project not found
+      }
+      console.error('Error fetching project:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  // Create a new project
+  static async createProject(
+    projectData: CreateProjectData, 
+    walletAddress: string, 
+    userId?: string
+  ): Promise<Project> {
+    // First check if user already has 3 projects
+    const existingProjects = await this.getUserProjects(walletAddress);
+    if (existingProjects.length >= 3) {
+      throw new Error('You can only create up to 3 projects');
+    }
+
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
+        ...projectData,
+        wallet_address: walletAddress,
+        user_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  // Update an existing project
+  static async updateProject(
+    projectData: UpdateProjectData,
+    walletAddress: string
+  ): Promise<Project> {
+    const { id, ...updateData } = projectData;
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updateData)
+      .eq('id', id)
+      .eq('wallet_address', walletAddress)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating project:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
+  // Delete a project
+  static async deleteProject(id: string, walletAddress: string): Promise<void> {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id)
+      .eq('wallet_address', walletAddress);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      throw error;
+    }
+  }
+
+  // Search projects by expertise
+  static async searchProjectsByExpertise(expertise: string): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .contains('looking_for', [expertise])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error searching projects:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  // Search projects by name or description
+  static async searchProjects(query: string): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .or(`project_name.ilike.%${query}%,elevator_pitch.ilike.%${query}%`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error searching projects:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+}
