@@ -64,10 +64,20 @@ export class ProjectService {
       throw new Error('You can only create up to 3 projects');
     }
 
+    // Clean the data to remove undefined values
+    const cleanProjectData = {
+      project_name: projectData.project_name,
+      elevator_pitch: projectData.elevator_pitch,
+      links: projectData.links,
+      founders: projectData.founders,
+      looking_for: projectData.looking_for,
+      ...(projectData.logo_url && { logo_url: projectData.logo_url }),
+    };
+
     const { data, error } = await supabase
       .from('projects')
       .insert({
-        ...projectData,
+        ...cleanProjectData,
         wallet_address: walletAddress,
         user_id: userId,
       })
@@ -89,9 +99,18 @@ export class ProjectService {
   ): Promise<Project> {
     const { id, ...updateData } = projectData;
 
+    // Clean the data to remove undefined values, but allow null for logo_url to clear it
+    const cleanUpdateData: any = {};
+    Object.keys(updateData).forEach(key => {
+      const value = (updateData as any)[key];
+      if (value !== undefined) {
+        cleanUpdateData[key] = value;
+      }
+    });
+
     const { data, error } = await supabase
       .from('projects')
-      .update(updateData)
+      .update(cleanUpdateData)
       .eq('id', id)
       .eq('wallet_address', walletAddress)
       .select()

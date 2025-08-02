@@ -7,6 +7,7 @@ export interface Project {
   links: string[];
   founders: string[];
   looking_for: string[];
+  logo_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -17,6 +18,7 @@ export interface CreateProjectData {
   links: string[];
   founders: string[];
   looking_for: string[];
+  logo_url?: string;
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

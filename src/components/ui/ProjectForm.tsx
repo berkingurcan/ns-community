@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from './Button';
+import { ImageUpload } from './ImageUpload';
 import { CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS, Project } from '@/types/project';
 
 interface ProjectFormProps {
@@ -9,15 +10,17 @@ interface ProjectFormProps {
   onSubmit: (data: CreateProjectData | UpdateProjectData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  walletAddress: string;
 }
 
-export function ProjectForm({ project, onSubmit, onCancel, isLoading = false }: ProjectFormProps) {
+export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, walletAddress }: ProjectFormProps) {
   const [formData, setFormData] = useState<CreateProjectData>({
     project_name: '',
     elevator_pitch: '',
     links: [''],
     founders: [''],
     looking_for: [],
+    logo_url: '',
   });
 
   const [currentLink, setCurrentLink] = useState('');
@@ -32,6 +35,7 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false }: 
         links: project.links.length > 0 ? project.links : [''],
         founders: project.founders.length > 0 ? project.founders : [''],
         looking_for: project.looking_for,
+        logo_url: project.logo_url || '',
       });
     }
   }, [project]);
@@ -88,6 +92,20 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false }: 
     }));
   };
 
+  const handleImageUploaded = (imageUrl: string) => {
+    setFormData(prev => ({
+      ...prev,
+      logo_url: imageUrl
+    }));
+  };
+
+  const handleImageRemoved = () => {
+    setFormData(prev => ({
+      ...prev,
+      logo_url: ''
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -106,6 +124,7 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false }: 
       ...formData,
       links: formData.links.filter(link => link.trim() !== ''),
       founders: formData.founders.filter(founder => founder.trim() !== ''),
+      logo_url: formData.logo_url || undefined, // Convert empty string to undefined
     };
 
     const submitData = project 
@@ -136,6 +155,15 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false }: 
             required
           />
         </div>
+
+        {/* Project Logo */}
+        <ImageUpload
+          currentImageUrl={formData.logo_url}
+          onImageUploaded={handleImageUploaded}
+          onImageRemoved={handleImageRemoved}
+          walletAddress={walletAddress}
+          isLoading={isLoading}
+        />
 
         {/* Elevator Pitch */}
         <div>

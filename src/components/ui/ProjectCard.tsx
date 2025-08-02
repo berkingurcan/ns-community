@@ -14,11 +14,20 @@ export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: Proj
   return (
     <div className="bg-background border border-border rounded-lg p-6 shadow-sm">
       <div className="space-y-4">
-        {/* Project Name */}
-        <div>
-          <h3 className="text-xl font-semibold text-foreground">
-            {project.project_name}
-          </h3>
+        {/* Project Logo and Name */}
+        <div className="flex items-start gap-4">
+          {project.logo_url && (
+            <img
+              src={project.logo_url}
+              alt={`${project.project_name} logo`}
+              className="w-16 h-16 object-cover rounded-lg border border-border flex-shrink-0"
+            />
+          )}
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-foreground">
+              {project.project_name}
+            </h3>
+          </div>
         </div>
 
         {/* Elevator Pitch */}

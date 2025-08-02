@@ -307,6 +307,7 @@ const ProjectsPage = () => {
                 onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
                 onCancel={handleCancelForm}
                 isLoading={isSubmitting}
+                walletAddress={walletAddress!}
               />
             )}
           </div>
