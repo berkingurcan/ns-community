@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -35,7 +35,6 @@ export default function OnboardingPage() {
   const { publicKey } = useWallet();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
     discordId: '',
     shillYourself: '',
@@ -44,13 +43,7 @@ export default function OnboardingPage() {
     xHandle: ''
   });
 
-  // Handle authentication redirect
-  useEffect(() => {
-    if (!session || !publicKey) {
-      setIsRedirecting(true);
-      router.push('/');
-    }
-  }, [session, publicKey, router]);
+  // Development: Allow access to onboarding even without auth
 
   const handleInputChange = (field: keyof OnboardingFormData, value: string) => {
     setFormData(prev => ({
@@ -153,17 +146,8 @@ export default function OnboardingPage() {
     }
   };
 
-  // Show loading state while redirecting
-  if (isRedirecting || !session || !publicKey) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>
-          <p className="text-gray-300">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
+  // Development: Show warning when no auth but still allow access
+  const hasAuth = session && publicKey;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
@@ -207,6 +191,24 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
+
+          {/* Development Notice */}
+          {!hasAuth && (
+            <div className="relative p-4 bg-orange-500/10 border border-orange-400/30 rounded-2xl backdrop-blur-sm">
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-orange-300 text-sm font-medium">
+                    Development Mode: No wallet connected or session found. Form submission will be disabled.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Onboarding Form */}
           <form onSubmit={handleSubmit} className="relative space-y-6">
@@ -321,7 +323,7 @@ export default function OnboardingPage() {
             <div className="pt-6">
               <Button
                 type="submit"
-                disabled={isLoading || !formData.discordId || !formData.shillYourself || formData.expertises.length === 0}
+                disabled={isLoading || !hasAuth || !formData.discordId || !formData.shillYourself || formData.expertises.length === 0}
                 className="relative w-full h-14 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-500 hover:via-blue-500 hover:to-cyan-500 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-500 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -332,6 +334,13 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-center space-x-3">
                       <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       <span>Saving Profile...</span>
+                    </div>
+                  ) : !hasAuth ? (
+                    <div className="flex items-center justify-center space-x-3">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <span>Connect Wallet to Submit</span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center space-x-3">
