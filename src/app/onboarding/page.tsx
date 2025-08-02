@@ -28,7 +28,6 @@ const EXPERTISE_OPTIONS = [
   'Legal/Compliance',
   'Finance/Tokenomics',
   'Content Creation',
-  'Project Management'
 ];
 
 export default function OnboardingPage() {
