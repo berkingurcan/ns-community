@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -35,6 +35,7 @@ export default function OnboardingPage() {
   const { publicKey } = useWallet();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [formData, setFormData] = useState<OnboardingFormData>({
     discordId: '',
     shillYourself: '',
@@ -42,6 +43,14 @@ export default function OnboardingPage() {
     github: '',
     xHandle: ''
   });
+
+  // Handle authentication redirect
+  useEffect(() => {
+    if (!session || !publicKey) {
+      setIsRedirecting(true);
+      router.push('/');
+    }
+  }, [session, publicKey, router]);
 
   const handleInputChange = (field: keyof OnboardingFormData, value: string) => {
     setFormData(prev => ({
@@ -144,9 +153,16 @@ export default function OnboardingPage() {
     }
   };
 
-  if (!session || !publicKey) {
-    router.push('/');
-    return null;
+  // Show loading state while redirecting
+  if (isRedirecting || !session || !publicKey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-300">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -240,7 +240,7 @@ export default function Home() {
                                             Access Granted! 🎉
                                         </h2>
                                         <p className="text-gray-300 text-lg">
-                                            You're authenticated and ready to explore
+                                            You&apos;re authenticated and ready to explore
                                         </p>
                                     </div>
                                     
