@@ -183,7 +183,7 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
         {/* Founders */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Founders *
+            Founders&apos; X Handles (optional)
           </label>
           <div className="space-y-2">
             {formData.founders.filter(f => f.trim() !== '').map((founder, index) => (

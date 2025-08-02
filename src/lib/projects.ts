@@ -33,6 +33,32 @@ export class ProjectService {
     return data || [];
   }
 
+  // Get paginated projects
+  static async getPaginatedProjects(page: number = 1, limit: number = 9): Promise<{ projects: Project[], total: number, hasMore: boolean }> {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, error, count } = await supabase
+      .from('projects')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('Error fetching paginated projects:', error);
+      throw error;
+    }
+
+    const total = count || 0;
+    const hasMore = (page * limit) < total;
+
+    return {
+      projects: data || [],
+      total,
+      hasMore
+    };
+  }
+
   // Get a single project by ID
   static async getProject(id: string): Promise<Project | null> {
     const { data, error } = await supabase
