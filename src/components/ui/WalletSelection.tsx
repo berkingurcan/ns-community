@@ -24,6 +24,20 @@ const walletOptions: WalletOption[] = [
     isPopular: true,
   },
   {
+    name: 'Backpack' as WalletName,
+    icon: '🎒',
+    displayName: 'Backpack',
+    description: 'Next-level wallet',
+    color: 'from-indigo-500 to-purple-600',
+  },
+  {
+    name: 'Brave' as WalletName,
+    icon: '🦁',
+    displayName: 'Brave Wallet',
+    description: 'Built-in browser wallet',
+    color: 'from-orange-600 to-red-500',
+  },
+  {
     name: 'Solflare' as WalletName,
     icon: '🔥',
     displayName: 'Solflare',
@@ -62,12 +76,34 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
     setIsConnecting(true);
     
     try {
+      console.log(`Attempting to connect to wallet: ${walletName}`);
+      
+      // Select the wallet first
       select(walletName);
+      console.log(`Wallet selected: ${walletName}`);
+      
+      // Small delay to ensure wallet is properly selected
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then connect
+      console.log(`Connecting to wallet: ${walletName}`);
       await connect();
+      console.log(`Successfully connected to wallet: ${walletName}`);
       onWalletSelect?.(walletName);
     } catch (error) {
-      console.error('Wallet connection failed:', error);
+      console.error(`Wallet connection failed for ${walletName}:`, error);
       setSelectedWallet(null);
+      
+      // Show more specific error message
+      if (error instanceof Error) {
+        if (error.message?.includes('WalletNotSelectedError')) {
+          console.error('Wallet not properly selected. Make sure the wallet is installed and available.');
+        } else if (error.message?.includes('WalletNotReadyError')) {
+          console.error('Wallet is not ready. Please make sure the wallet is installed and unlocked.');
+        } else if (error.message?.includes('WalletConnectionError')) {
+          console.error('Failed to connect to wallet. Please try again.');
+        }
+      }
     } finally {
       setIsConnecting(false);
     }

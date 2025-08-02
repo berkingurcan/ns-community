@@ -17,8 +17,10 @@ export default function Wallet({ children }: { children: React.ReactNode }) {
 
     const wallets = useMemo(
         () => [
+            // Legacy adapters for compatibility
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter({ network }),
+            // Modern wallets (Backpack, Brave) use Wallet Standard and are auto-detected
         ],
         [network]
     );
