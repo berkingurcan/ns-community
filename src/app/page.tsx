@@ -316,7 +316,7 @@ export default function HomePage() {
               </Button>
               <Button
                 onClick={handleViewProfile}
-                variant="outline"
+                variant="default"
                 size="lg"
                 className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-4 rounded-xl backdrop-blur-sm"
               >
