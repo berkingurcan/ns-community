@@ -7,16 +7,32 @@ import { Button } from '@/components/ui/Button';
 import { StepIndicator } from '@/components/ui/StepIndicator';
 import { WalletSelection } from '@/components/ui/WalletSelection';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-    const { session, login, logout } = useAuth();
+    const { session, hasProfile, login, logout } = useAuth();
     const { publicKey, connected } = useWallet();
     const [isLoading, setIsLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Handle routing based on authentication and profile status
+    useEffect(() => {
+        if (!mounted || !session) return;
+        
+        if (hasProfile === true) {
+            // User is authenticated and has a profile - redirect to dashboard
+            router.push('/dashboard');
+        } else if (hasProfile === false) {
+            // User is authenticated but doesn't have a profile - redirect to onboarding
+            router.push('/onboarding');
+        }
+        // If hasProfile is null, we're still checking - don't redirect
+    }, [mounted, session, hasProfile, router]);
 
     const handleLogin = async () => {
         setIsLoading(true);

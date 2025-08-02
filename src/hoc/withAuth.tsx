@@ -10,7 +10,7 @@ import { verifyNFTOwnership } from '@/lib/nftVerification';
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
     const AuthComponent = (props: React.ComponentProps<typeof WrappedComponent>) => {
-        const { session } = useAuth();
+        const { session, hasProfile } = useAuth();
         const { publicKey } = useWallet();
         const { connection } = useConnection();
         const router = useRouter();
@@ -21,6 +21,17 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
             const checkNft = async () => {
                 if (!session || !publicKey) {
                     router.push('/');
+                    return;
+                }
+
+                // If user doesn't have a profile, redirect to onboarding
+                if (hasProfile === false) {
+                    router.push('/onboarding');
+                    return;
+                }
+
+                // If we're still checking for profile, wait
+                if (hasProfile === null) {
                     return;
                 }
 
@@ -66,13 +77,13 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
             };
 
             checkNft();
-        }, [session, publicKey, connection, router]);
+        }, [session, publicKey, connection, router, hasProfile]);
 
         if (loading) {
             return <div>Loading...</div>; // Or a loading spinner
         }
 
-        if (!session || !hasNft) {
+        if (!session || !hasNft || hasProfile === false || hasProfile === null) {
             return null; // or a redirect component
         }
 
