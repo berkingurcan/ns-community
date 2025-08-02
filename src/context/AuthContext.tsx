@@ -19,18 +19,24 @@ interface UserProfile {
     updated_at: string;
 }
 
+interface LoginResult {
+    success: boolean;
+    error?: string;
+    type?: 'wallet_error' | 'config_error' | 'nft_required' | 'auth_error' | 'session_error' | 'unknown_error';
+}
+
 const AuthContext = createContext<{
     session: Session | null;
     userProfile: UserProfile | null;
     hasProfile: boolean | null;
-    login: () => Promise<void>;
+    login: () => Promise<LoginResult>;
     logout: () => Promise<void>;
     checkUserProfile: () => Promise<void>;
 }>({
     session: null,
     userProfile: null,
     hasProfile: null,
-    login: async () => {},
+    login: async () => ({ success: false }),
     logout: async () => {},
     checkUserProfile: async () => {},
 });
@@ -124,10 +130,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [publicKey, session, checkUserProfile]);
 
-    const login = async () => {
+    const login = async (): Promise<LoginResult> => {
         if (!publicKey) {
             console.error('Wallet not connected');
-            throw new Error('Wallet not connected');
+            return { success: false, error: 'Wallet not connected', type: 'wallet_error' };
         }
 
         try {
@@ -137,7 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const collectionAddress = process.env.NEXT_PUBLIC_NFT_COLLECTION_ADDRESS;
             if (!collectionAddress) {
                 console.error('NFT collection address not configured');
-                throw new Error('NFT collection address not configured in environment variables');
+                return { success: false, error: 'NFT collection address not configured in environment variables', type: 'config_error' };
             }
 
             const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL || connection.rpcEndpoint;
@@ -151,7 +157,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (!hasNFT) {
                 console.error('User does not own required NFT from collection');
-                throw new Error('You must own an NFT from the required collection to access this application');
+                return { success: false, error: 'User does not own required NFT from collection', type: 'nft_required' };
             }
 
             console.log('NFT ownership verified, proceeding with authentication...');
@@ -168,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (error.message.includes('Web3 provider not found')) {
                     console.error('Make sure your wallet is connected and the Web3 provider is enabled in Supabase.');
                 }
-                throw error;
+                return { success: false, error: error.message, type: 'auth_error' };
             }
 
             if (data.session) {
@@ -176,13 +182,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setSession(data.session);
                 // Check for user profile after successful authentication
                 await checkUserProfile();
+                return { success: true };
             } else {
                 console.error('Authentication succeeded but no session was created');
-                throw new Error('Authentication succeeded but no session was created');
+                return { success: false, error: 'Authentication succeeded but no session was created', type: 'session_error' };
             }
         } catch (err) {
             console.error('Error during authentication:', err);
-            throw err;
+            return { success: false, error: err instanceof Error ? err.message : 'Unknown error occurred', type: 'unknown_error' };
         }
     };
 

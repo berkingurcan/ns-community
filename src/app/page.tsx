@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -31,6 +31,10 @@ export default function HomePage() {
   
   // Auth states
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  
+  // NFT popup states
+  const [showNFTPopup, setShowNFTPopup] = useState(false);
+  const [nftError, setNftError] = useState('');
 
   const projectsPerPage = 9;
 
@@ -51,14 +55,7 @@ export default function HomePage() {
     }
   }, [session, hasProfile, router]);
 
-  // Load projects when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadProjects(1);
-    }
-  }, [isAuthenticated, searchQuery, selectedExpertise]);
-
-  const loadProjects = async (page: number) => {
+  const loadProjects = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
       const result = await ProjectService.getPaginatedProjects(page, projectsPerPage);
@@ -90,12 +87,30 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [searchQuery, selectedExpertise]);
+
+  // Load projects when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProjects(1);
+    }
+  }, [isAuthenticated, loadProjects]);
 
   const handleLogin = async () => {
     setIsAuthLoading(true);
     try {
-      await login();
+      const result = await login();
+      
+      if (!result.success) {
+        if (result.type === 'nft_required') {
+          setNftError(result.error || 'User does not own required NFT from collection');
+          setShowNFTPopup(true);
+        } else {
+          // Handle other types of errors (config, wallet, auth, etc.)
+          console.error('Login failed:', result.error);
+          // You could add other error handling here if needed
+        }
+      }
     } finally {
       setIsAuthLoading(false);
     }
@@ -282,6 +297,40 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* NFT Required Popup Modal */}
+        {showNFTPopup && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    NFT Required
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {nftError}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    You need to own an NFT from the required collection to access this application.
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => setShowNFTPopup(false)}
+                  className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
