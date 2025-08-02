@@ -31,7 +31,7 @@ const EXPERTISE_OPTIONS = [
 ];
 
 export default function ProfilePage() {
-  const { session, userProfile, checkUserProfile } = useAuth();
+  const { session, userProfile, hasProfile, checkUserProfile } = useAuth();
   const { publicKey } = useWallet();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -46,13 +46,18 @@ export default function ProfilePage() {
 
   // Redirect if not authenticated
   useEffect(() => {
+    // We shouldn't do anything until we know the auth and profile status.
+    if (hasProfile === null) {
+      return;
+    }
+    
     if (!session || !publicKey) {
       router.push('/');
       return;
     }
 
     // Redirect to onboarding if no profile exists
-    if (userProfile === null) {
+    if (hasProfile === false) {
       router.push('/onboarding');
       return;
     }
@@ -67,7 +72,7 @@ export default function ProfilePage() {
         xHandle: userProfile.x_handle || ''
       });
     }
-  }, [session, publicKey, userProfile, router]);
+  }, [session, publicKey, userProfile, hasProfile, router]);
 
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setFormData(prev => ({
@@ -142,7 +147,7 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  if (!session || !publicKey || !userProfile) {
+  if (!session || !publicKey || hasProfile === null || !userProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-purple-400 border-t-transparent rounded-full"></div>
