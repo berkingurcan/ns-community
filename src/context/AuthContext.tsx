@@ -18,7 +18,7 @@ const AuthContext = createContext<{
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
-    const { publicKey, signMessage } = useWallet();
+    const { publicKey } = useWallet();
 
     useEffect(() => {
         const getSession = async () => {
@@ -42,15 +42,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: `${publicKey.toBase58()}@solana.com`,
-            password: 'password', // This is a dummy password
-        });
+        try {
+            console.log('Authenticating with Solana wallet...');
+            
+            // Use Supabase's native Web3 authentication for Solana
+            const { data, error } = await supabase.auth.signInWithWeb3({
+                chain: 'solana',
+                statement: 'Sign in to NFT Gated App to verify your wallet ownership and access exclusive content.',
+                // The wallet adapter will automatically handle the wallet connection
+            });
 
-        if (error) {
-            console.error('Error logging in:', error);
-        } else {
-            setSession(data.session);
+            if (error) {
+                console.error('Error authenticating with Web3:', error);
+                if (error.message.includes('Web3 provider not found')) {
+                    console.error('Make sure your wallet is connected and the Web3 provider is enabled in Supabase.');
+                }
+                return;
+            }
+
+            if (data.session) {
+                console.log('Successfully authenticated with Solana wallet');
+                setSession(data.session);
+            } else {
+                console.error('Authentication succeeded but no session was created');
+            }
+        } catch (err) {
+            console.error('Unexpected error during Web3 authentication:', err);
         }
     };
 
