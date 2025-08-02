@@ -75,21 +75,60 @@ export default function OnboardingPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      const walletAddress = publicKey.toBase58();
+      
+      // First check if a profile already exists
+      const { data: existingProfile, error: checkError } = await supabase
         .from('user_profiles')
-        .insert({
-          wallet_address: publicKey.toBase58(),
-          discord_id: formData.discordId,
-          shill_yourself: formData.shillYourself,
-          expertises: formData.expertises,
-          github: formData.github || null,
-          x_handle: formData.xHandle || null
-        });
+        .select('id')
+        .eq('wallet_address', walletAddress)
+        .single();
 
-      if (error) {
-        console.error('Error saving profile:', error);
-        alert('Failed to save profile. Please try again.');
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing profile:', checkError);
+        alert('Failed to check existing profile. Please try again.');
         return;
+      }
+
+      if (existingProfile) {
+        console.log('Profile already exists, updating instead...');
+        // Update existing profile
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({
+            discord_id: formData.discordId,
+            shill_yourself: formData.shillYourself,
+            expertises: formData.expertises,
+            github: formData.github || null,
+            x_handle: formData.xHandle || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('wallet_address', walletAddress);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          alert(`Failed to update profile: ${updateError.message || 'Unknown error'}`);
+          return;
+        }
+      } else {
+        // Create new profile
+        const { error: insertError } = await supabase
+          .from('user_profiles')
+          .insert({
+            wallet_address: walletAddress,
+            discord_id: formData.discordId,
+            shill_yourself: formData.shillYourself,
+            expertises: formData.expertises,
+            github: formData.github || null,
+            x_handle: formData.xHandle || null
+          });
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          console.error('Full error details:', JSON.stringify(insertError, null, 2));
+          alert(`Failed to create profile: ${insertError.message || 'Unknown error'}`);
+          return;
+        }
       }
 
       console.log('Profile saved successfully');
@@ -98,6 +137,7 @@ export default function OnboardingPage() {
       router.push('/dashboard');
     } catch (error) {
       console.error('Unexpected error:', error);
+      console.error('Full error details:', JSON.stringify(error, null, 2));
       alert('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
