@@ -136,7 +136,7 @@ export default function OnboardingPage() {
       console.log('Profile saved successfully');
       // Refresh the user profile status in AuthContext
       await checkUserProfile();
-      router.push('/dashboard');
+      router.push('/profile');
     } catch (error) {
       console.error('Unexpected error:', error);
       console.error('Full error details:', JSON.stringify(error, null, 2));
