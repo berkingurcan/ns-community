@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from './Button';
 import { ImageUploadService } from '@/lib/imageUpload';
 
@@ -23,7 +23,29 @@ export function ImageUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const blobUrlsToCleanup = useRef<Set<string>>(new Set());
+
+  // Sync with parent state changes
+  useEffect(() => {
+    if (currentImageUrl !== previewUrl && !isUploading) {
+      setPreviewUrl(currentImageUrl || null);
+      setLocalPreviewUrl(null);
+    }
+  }, [currentImageUrl, previewUrl, isUploading]);
+
+  // Cleanup on unmount only
+  useEffect(() => {
+    const urlsToCleanup = blobUrlsToCleanup.current;
+    return () => {
+      // Clean up all tracked blob URLs when component unmounts
+      urlsToCleanup.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      urlsToCleanup.clear();
+    };
+  }, []);
 
   const handleFileSelect = useCallback(async (file: File) => {
     if (!file) return;
@@ -38,6 +60,7 @@ export function ImageUpload({
     }
 
     setIsUploading(true);
+    let tempPreviewUrl: string | null = null;
     
     try {
       // Check storage setup first
@@ -46,9 +69,11 @@ export function ImageUpload({
         throw new Error(setupCheck.error || 'Storage not properly configured');
       }
 
-      // Create preview
-      const previewUrl = URL.createObjectURL(file);
-      setPreviewUrl(previewUrl);
+      // Create local preview immediately
+      tempPreviewUrl = URL.createObjectURL(file);
+      blobUrlsToCleanup.current.add(tempPreviewUrl);
+      setLocalPreviewUrl(tempPreviewUrl);
+      setPreviewUrl(tempPreviewUrl);
 
       // Compress image if it's large
       let fileToUpload = file;
@@ -63,20 +88,31 @@ export function ImageUpload({
       // Upload to Supabase
       const result = await ImageUploadService.uploadImage(fileToUpload, walletAddress);
       
-      // Clean up preview URL
-      if (previewUrl !== currentImageUrl) {
-        URL.revokeObjectURL(previewUrl);
+      // Only clean up and update after successful upload
+      if (tempPreviewUrl) {
+        URL.revokeObjectURL(tempPreviewUrl);
+        blobUrlsToCleanup.current.delete(tempPreviewUrl);
+        setLocalPreviewUrl(null);
       }
       
+      // Update to the uploaded URL
       setPreviewUrl(result.url);
       onImageUploaded(result.url);
       setErrorMessage(null);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload failed:', error);
-      setErrorMessage(error.message || 'Failed to upload image');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      setErrorMessage(errorMessage);
       
-      // Reset preview on error
+      // Clean up local preview on error
+      if (tempPreviewUrl) {
+        URL.revokeObjectURL(tempPreviewUrl);
+        blobUrlsToCleanup.current.delete(tempPreviewUrl);
+        setLocalPreviewUrl(null);
+      }
+      
+      // Reset to current image or null, but don't cause flash
       setPreviewUrl(currentImageUrl || null);
     } finally {
       setIsUploading(false);
@@ -111,9 +147,19 @@ export function ImageUpload({
   }, [handleFileSelect]);
 
   const handleRemoveImage = useCallback(() => {
-    if (previewUrl && previewUrl !== currentImageUrl) {
-      URL.revokeObjectURL(previewUrl);
+    // Clean up any local preview URL
+    if (localPreviewUrl) {
+      URL.revokeObjectURL(localPreviewUrl);
+      blobUrlsToCleanup.current.delete(localPreviewUrl);
+      setLocalPreviewUrl(null);
     }
+    
+    // Clean up preview URL if it's a blob URL (not a Supabase URL)
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+      blobUrlsToCleanup.current.delete(previewUrl);
+    }
+    
     setPreviewUrl(null);
     setErrorMessage(null);
     onImageRemoved();
@@ -122,7 +168,7 @@ export function ImageUpload({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [previewUrl, currentImageUrl, onImageRemoved]);
+  }, [previewUrl, localPreviewUrl, onImageRemoved]);
 
   const openFileDialog = useCallback(() => {
     fileInputRef.current?.click();
