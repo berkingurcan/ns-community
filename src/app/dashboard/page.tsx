@@ -24,7 +24,7 @@ const DashboardPage = () => {
                 </h1>
                 <p className="mt-2 text-secondary-foreground">
                     You have access because you own the required NFT.
-                p>
+                </p>
                 <Button onClick={handleLogout} variant="destructive" className="mt-4">
                     Logout
                 </Button>

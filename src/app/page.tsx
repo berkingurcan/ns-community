@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 
 export default function Home() {
     const { session, login, logout } = useAuth();
-    const { publicKey, connecting, connected } = useWallet();
+    const { publicKey, connected } = useWallet();
     const [isLoading, setIsLoading] = useState(false);
     const [mounted, setMounted] = useState(false);
 

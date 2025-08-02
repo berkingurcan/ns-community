@@ -3,8 +3,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { Session } from '@supabase/supabase-js';
+import { verifyNFTOwnership } from '@/lib/nftVerification';
 
 const AuthContext = createContext<{
     session: Session | null;
@@ -19,6 +20,7 @@ const AuthContext = createContext<{
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const { publicKey } = useWallet();
+    const { connection } = useConnection();
 
     useEffect(() => {
         const getSession = async () => {
@@ -39,11 +41,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const login = async () => {
         if (!publicKey) {
             console.error('Wallet not connected');
-            return;
+            throw new Error('Wallet not connected');
         }
 
         try {
             console.log('Authenticating with Solana wallet...');
+
+            // First, verify NFT ownership before proceeding with authentication
+            const collectionAddress = process.env.NEXT_PUBLIC_NFT_COLLECTION_ADDRESS;
+            if (!collectionAddress) {
+                console.error('NFT collection address not configured');
+                throw new Error('NFT collection address not configured in environment variables');
+            }
+
+            const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL || connection.rpcEndpoint;
+            
+            console.log('Verifying NFT ownership for collection:', collectionAddress);
+            
+            const hasNFT = await verifyNFTOwnership(publicKey, {
+                collectionAddress,
+                rpcEndpoint
+            });
+
+            if (!hasNFT) {
+                console.error('User does not own required NFT from collection');
+                throw new Error('You must own an NFT from the required collection to access this application');
+            }
+
+            console.log('NFT ownership verified, proceeding with authentication...');
             
             // Use Supabase's native Web3 authentication for Solana
             const { data, error } = await supabase.auth.signInWithWeb3({
@@ -57,17 +82,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (error.message.includes('Web3 provider not found')) {
                     console.error('Make sure your wallet is connected and the Web3 provider is enabled in Supabase.');
                 }
-                return;
+                throw error;
             }
 
             if (data.session) {
-                console.log('Successfully authenticated with Solana wallet');
+                console.log('Successfully authenticated with Solana wallet and NFT verification');
                 setSession(data.session);
             } else {
                 console.error('Authentication succeeded but no session was created');
+                throw new Error('Authentication succeeded but no session was created');
             }
         } catch (err) {
-            console.error('Unexpected error during Web3 authentication:', err);
+            console.error('Error during authentication:', err);
+            throw err;
         }
     };
 

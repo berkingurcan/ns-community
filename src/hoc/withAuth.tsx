@@ -5,12 +5,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
+// Removed unused imports
+import { verifyNFTOwnership } from '@/lib/nftVerification';
 
 const withAuth = (WrappedComponent: React.ComponentType) => {
-    const AuthComponent = (props: any) => {
+    const AuthComponent = (props: React.ComponentProps<typeof WrappedComponent>) => {
         const { session } = useAuth();
-        const { publicKey }s = useWallet();
+        const { publicKey } = useWallet();
         const { connection } = useConnection();
         const router = useRouter();
         const [hasNft, setHasNft] = useState(false);
@@ -24,25 +25,37 @@ const withAuth = (WrappedComponent: React.ComponentType) => {
                 }
 
                 try {
-                    const nftCollectionMint = new PublicKey(process.env.NEXT_PUBLIC_NFT_COLLECTION_MINT!);
-                    const nfts = await connection.getParsedTokenAccountsByOwner(
-                        publicKey,
-                        {
-                            programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-                        }
-                    );
+                    // Get collection address from environment variables
+                    const collectionAddress = process.env.NEXT_PUBLIC_NFT_COLLECTION_ADDRESS;
+                    if (!collectionAddress) {
+                        console.error('NFT collection address not configured in environment variables');
+                        router.push('/unauthorized');
+                        return;
+                    }
 
-                    const userHasNft = nfts.value.some(nft => {
-                        const mint = new PublicKey(nft.account.data.parsed.info.mint);
-                        // This is a simplified check. For a more robust solution,
-                        // you would likely need to fetch the NFT's metadata to verify the collection.
-                        return mint.equals(nftCollectionMint);
+                    // Get RPC endpoint from environment variable (must support DAS API)
+                    const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL || connection.rpcEndpoint;
+                    
+                    if (!rpcEndpoint) {
+                        console.error('RPC endpoint not configured. DAS API support required for compressed NFTs.');
+                        router.push('/unauthorized');
+                        return;
+                    }
+
+                    console.log('Verifying NFT ownership for collection:', collectionAddress);
+                    
+                    // Verify NFT ownership using the new compressed NFT verification
+                    const hasNFT = await verifyNFTOwnership(publicKey, {
+                        collectionAddress,
+                        rpcEndpoint
                     });
 
-                    if (userHasNft) {
+                    if (hasNFT) {
+                        console.log('User has required NFT from collection');
                         setHasNft(true);
                     } else {
-                        router.push('/unauthorized'); // Redirect to an unauthorized page
+                        console.log('User does not have required NFT from collection');
+                        router.push('/unauthorized');
                     }
                 } catch (error) {
                     console.error('Error checking NFT ownership:', error);
