@@ -129,7 +129,7 @@ export default function MyProjectsPage() {
         <div className="text-center py-16 border-2 border-dashed rounded-lg">
           <h2 className="text-xl font-semibold">No projects yet.</h2>
           <p className="text-muted-foreground mt-2 mb-4">
-            It&apos;s time to start building. Create your first project!
+            It&#39;s time to start building. Create your first project!
           </p>
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="mr-2 h-4 w-4" /> Create Project
