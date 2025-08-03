@@ -39,18 +39,36 @@ export const validateProfileForm = (formData: ProfileFormData): string | null =>
 };
 
 // Discord metadata'dan profile bilgilerini çıkarma utility'si
-export const extractProfileFromDiscord = (user: { user_metadata?: Record<string, unknown>; identities?: Array<Record<string, unknown>>; email?: string }): Partial<ProfileFormData> => {
+interface IdentityData {
+  id?: string;
+  username?: string;
+  global_name?: string;
+  full_name?: string;
+  user_name?: string; // For GitHub/Twitter specific fields
+  login?: string;     // For GitHub specific fields
+  screen_name?: string; // For Twitter specific fields
+  bio?: string;
+  about_me?: string;
+  [key: string]: unknown; // Allow for other unknown properties
+}
+
+interface Identity {
+  provider: string;
+  identity_data?: IdentityData;
+}
+
+export const extractProfileFromDiscord = (user: { user_metadata?: Record<string, unknown>; identities?: Identity[]; email?: string }): Partial<ProfileFormData> => {
   console.log('Extracting profile from Discord user:', user);
   
   const userMetadata = user.user_metadata || {};
   const identities = user.identities || [];
   
   // Discord identity'sini bul
-  const discordIdentity = identities.find((id: { provider: string; identity_data?: Record<string, unknown> }) => id.provider === 'discord');
+  const discordIdentity = identities.find((id) => id.provider === 'discord');
   
   // GitHub ve Twitter identity'lerini bul
-  const githubIdentity = identities.find((id: { provider: string; identity_data?: Record<string, unknown> }) => id.provider === 'github');
-  const twitterIdentity = identities.find((id: { provider: string; identity_data?: Record<string, unknown> }) => id.provider === 'twitter');
+  const githubIdentity = identities.find((id) => id.provider === 'github');
+  const twitterIdentity = identities.find((id) => id.provider === 'twitter');
   
   console.log('Discord identity:', discordIdentity);
   console.log('GitHub identity:', githubIdentity);

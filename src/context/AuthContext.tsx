@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, PostgrestError } from '@supabase/supabase-js';
 import { CoinService } from '@/lib/coins';
 import { UserCoinBalance } from '@/types/coin';
 
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Profile creation timeout')), 5000)
       );
       
-      const { data, error } = await Promise.race([insertQuery, insertTimeout]) as { data: unknown; error: unknown };
+      const { data, error }: { data: UserProfile | null, error: PostgrestError | null } = await Promise.race([insertQuery, insertTimeout]);
 
       if (error) {
         if (error.message === 'Profile creation timeout') {
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('✅ Initial profile created:', data);
       return data;
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('❌ Unexpected error creating profile:', e);
       return null;
     }
@@ -184,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Database query timeout')), 5000)
       );
       
-      const { data, error } = await Promise.race([profileQuery, queryTimeout]) as { data: unknown; error: unknown };
+      const { data, error }: { data: UserProfile | null, error: PostgrestError | null } = await Promise.race([profileQuery, queryTimeout]);
 
       if (error) {
         if (error.message === 'Database query timeout') {
@@ -202,7 +202,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('✅ Profile found:', data);
         setUserProfile(data);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('❌ Unexpected error in fetchUserProfile:', e);
       setUserProfile(null);
     }
@@ -246,15 +246,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             await Promise.race([profilePromise, timeoutPromise]);
             console.log('✅ Profile fetched successfully');
-          } catch (e) {
-            console.warn('⚠️ Profile fetch failed or timed out:', e.message);
+          } catch (e: unknown) {
+            console.warn('⚠️ Profile fetch failed or timed out:', (e as Error).message);
             // Try one more time with longer timeout in background
             setTimeout(async () => {
               try {
                 await fetchUserProfile(currentUser);
                 console.log('✅ Profile fetched on retry');
-              } catch (retryError) {
-                console.warn('⚠️ Profile retry also failed:', retryError.message);
+              } catch (retryError: unknown) {
+                console.warn('⚠️ Profile retry also failed:', (retryError as Error).message);
               }
             }, 1000);
           }
@@ -266,8 +266,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               const balance = await CoinService.getUserBalance(currentUser.id);
               setCoinBalance(balance);
               console.log('✅ Coin balance loaded:', balance.balance);
-            } catch (e) {
-              console.warn('⚠️ Coin balance loading failed:', e.message);
+            } catch (e: unknown) {
+              console.warn('⚠️ Coin balance loading failed:', (e as Error).message);
             }
           }, 500);
           
@@ -280,8 +280,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             await Promise.race([rolePromise, roleTimeoutPromise]);
             console.log('✅ Role authorization completed');
-          } catch (e) {
-            console.warn('⚠️ Role authorization failed or timed out:', e.message);
+          } catch (e: unknown) {
+            console.warn('⚠️ Role authorization failed or timed out:', (e as Error).message);
             // Fallback to authorized
             setIsAuthorized(true);
           }
@@ -292,7 +292,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAuthorized(null);
           setLoading(false);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error('Error in manageSession:', e);
         setLoading(false);
       } finally {
@@ -314,8 +314,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             await Promise.race([connectivityTest, connectivityTimeout]);
             console.log('✅ Supabase connectivity OK');
-          } catch (connectivityError) {
-            console.warn('⚠️ Supabase connectivity test failed:', connectivityError.message);
+          } catch (connectivityError: unknown) {
+            console.warn('⚠️ Supabase connectivity test failed:', (connectivityError as Error).message);
             // Continue anyway - connectivity might be slow but working
           }
           
@@ -326,7 +326,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setTimeout(() => reject(new Error('Session fetch timeout')), 4000);
           });
           
-          const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: unknown }; error: unknown };
+          const { data: { session }, error }: { data: { session: Session | null }, error: PostgrestError | null } = await Promise.race([sessionPromise, timeoutPromise]);
           console.log('Initial session:', session);
           console.log('Initial session error:', error);
           
@@ -337,7 +337,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           
           await manageSession(session);
-        } catch (e) {
+        } catch (e: unknown) {
           console.error('Error in getInitialSession:', e);
           setLoading(false);
         }
@@ -383,7 +383,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         console.log('✅ Discord OAuth initiated successfully');
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('❌ Unexpected error during login:', e);
     }
     
@@ -407,7 +407,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const balance = await CoinService.getUserBalance(user.id);
         setCoinBalance(balance);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('❌ Error refreshing coin balance:', error);
       }
     }

@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function withAuth(WrappedComponent: React.ComponentType): React.ComponentType {
-  const AuthComponent = (props: Record<string, unknown>): JSX.Element => {
+  const AuthComponent = (props: Record<string, any>): React.ReactElement | null => {
     const { session, loading, isAuthorized, userProfile } = useAuth();
     const router = useRouter();
 

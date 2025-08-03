@@ -44,7 +44,7 @@ export default function CoinsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-2">My Coins</h1>
       <p className="text-muted-foreground mb-6">
-        Here&apos;s your transaction history in the NSphere ecosystem.
+        Here&#39;s your transaction history in the NSphere ecosystem.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
