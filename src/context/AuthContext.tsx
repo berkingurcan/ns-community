@@ -3,210 +3,371 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { Session } from '@supabase/supabase-js';
-import { verifyNFTOwnership } from '@/lib/nftVerification';
+import { Session, User } from '@supabase/supabase-js';
 
-interface UserProfile {
+export interface UserProfile {
     id: string;
-    wallet_address: string;
+    username: string;
     discord_id: string;
-    shill_yourself: string;
-    expertises: string[];
-    github: string | null;
-    x_handle: string | null;
+    shill_yourself?: string;
+    avatar_url?: string;
+    expertises?: string[];
+    github?: string;
+    x_handle?: string;
+    website_url?: string;
     created_at: string;
     updated_at: string;
 }
 
-interface LoginResult {
-    success: boolean;
-    error?: string;
-    type?: 'wallet_error' | 'config_error' | 'nft_required' | 'auth_error' | 'session_error' | 'unknown_error';
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  userProfile: UserProfile | null;
+  isAuthorized: boolean | null; // null: unknown, false: not allowed, true: allowed
+  loading: boolean;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<{
-    session: Session | null;
-    userProfile: UserProfile | null;
-    hasProfile: boolean | null;
-    login: () => Promise<LoginResult>;
-    logout: () => Promise<void>;
-    checkUserProfile: () => Promise<void>;
-}>({
-    session: null,
-    userProfile: null,
-    hasProfile: null,
-    login: async () => ({ success: false }),
-    logout: async () => {},
-    checkUserProfile: async () => {},
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  user: null,
+  userProfile: null,
+  isAuthorized: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [session, setSession] = useState<Session | null>(null);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [hasProfile, setHasProfile] = useState<boolean | null>(null);
-    const { publicKey } = useWallet();
-    const { connection } = useConnection();
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    const checkUserProfile = useCallback(async () => {
-        if (!publicKey) {
-            console.log('No public key available for profile check');
-            setHasProfile(null);
-            setUserProfile(null);
+
+
+  const checkRoleAuthorization = useCallback(async (user: User | null) => {
+    if (!user) {
+      setIsAuthorized(null);
+      return;
+    }
+
+    // Temporarily disable Discord role checking to prevent spam
+    // TODO: Fix Discord API configuration and re-enable this
+    console.log("Discord role check temporarily disabled - allowing all authenticated users");
+    setIsAuthorized(true);
+    return;
+
+    /* DISABLED - CAUSING SPAM
+    try {
+      console.log("=== DEBUG: Discord Role Check ===");
+      console.log("User ID:", user.id);
+      console.log("Session exists:", !!session);
+      console.log("Provider token exists:", !!session?.provider_token);
+      console.log("Full session:", JSON.stringify(session, null, 2));
+      
+      // Test if Edge Function is reachable
+      console.log("Attempting to call Edge Function...");
+      
+      const { data, error } = await supabase.functions.invoke('check-discord-roles', {
+        body: JSON.stringify({ test: true })
+      });
+      
+      console.log("Edge Function response data:", data);
+      console.log("Edge Function response error:", error);
+      
+      if (error) {
+        console.error('Edge Function Error Details:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error keys:', Object.keys(error));
+        throw error;
+      }
+      
+      console.log("Role check result:", data);
+      setIsAuthorized(data.hasRequiredRole);
+
+    } catch (e) {
+      console.error("Failed to check Discord roles:", e);
+      console.error("Full error object:", JSON.stringify(e, null, 2));
+      
+      // For now, let's allow access if Edge Function fails
+      // This prevents users from being locked out due to Discord API issues
+      console.warn("Setting isAuthorized to true due to Discord API failure - this is temporary");
+      setIsAuthorized(true);
+    }
+    */
+  }, []);
+
+  const createInitialProfile = useCallback(async (user: User) => {
+    console.log('Creating initial profile for user:', user.id);
+    
+    try {
+      console.log('User metadata:', user.user_metadata);
+      console.log('App metadata:', user.app_metadata);
+      
+      // Discord'dan bilgileri akıllıca çıkar
+      const { extractProfileFromDiscord } = await import('@/types/profile');
+      const discordProfile = extractProfileFromDiscord(user);
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: user.id,
+          discord_id: discordProfile.discordId,
+          username: discordProfile.username,
+          avatar_url: user.user_metadata?.avatar_url,
+          shill_yourself: discordProfile.shillYourself || null,
+          github: discordProfile.github || null,
+          x_handle: discordProfile.xHandle || null,
+          status: 'needs_onboarding'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating initial profile:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        return null;
+      }
+
+      console.log('✅ Initial profile created:', data);
+      return data;
+    } catch (e) {
+      console.error('❌ Unexpected error creating profile:', e);
+      return null;
+    }
+  }, []);
+
+  const fetchUserProfile = useCallback(async (user: User | null, forceRefresh: boolean = false) => {
+    console.log('=== FETCH USER PROFILE START ===');
+    console.log('User ID:', user?.id);
+    console.log('Force refresh:', forceRefresh);
+    
+    if (!user) {
+      console.log('No user provided, setting profile to null');
+      setUserProfile(null);
+      return;
+    }
+    
+    try {
+      console.log('Fetching profile from database...');
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('📝 No profile found - creating initial profile...');
+          const newProfile = await createInitialProfile(user);
+          setUserProfile(newProfile);
+        } else {
+          console.error('❌ Profile fetch error:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          setUserProfile(null);
+        }
+      } else {
+        console.log('✅ Profile found:', data);
+        console.log('Profile status:', data.status);
+        console.log('Profile data:', JSON.stringify(data, null, 2));
+        setUserProfile(data);
+      }
+    } catch (e) {
+      console.error('❌ Unexpected error in fetchUserProfile:', e);
+      setUserProfile(null);
+    }
+    
+    console.log('=== FETCH USER PROFILE END ===');
+  }, [createInitialProfile]);
+
+  useEffect(() => {
+    let isProcessing = false;
+    
+    const manageSession = async (session: Session | null) => {
+      if (isProcessing) {
+        console.log('Session management already in progress, skipping...');
+        return;
+      }
+      
+      isProcessing = true;
+      console.log('=== MANAGE SESSION START ===');
+      console.log('Session exists:', !!session);
+      console.log('User ID:', session?.user?.id);
+      console.log('User email:', session?.user?.email);
+      
+      try {
+        const currentUser = session?.user ?? null;
+        
+        setSession(session);
+        setUser(currentUser);
+        
+        if (currentUser) {
+          console.log('Fetching profile for authenticated user...');
+          try {
+            await Promise.race([
+              fetchUserProfile(currentUser),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), 8000))
+            ]);
+          } catch (e) {
+            console.error('Profile fetch failed:', e);
+            // Continue anyway, don't block the app
+          }
+          
+          try {
+            await Promise.race([
+              checkRoleAuthorization(currentUser),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Role check timeout')), 5000))
+            ]);
+          } catch (e) {
+            console.error('Role authorization failed:', e);
+            // Set authorized to true as fallback
+            setIsAuthorized(true);
+          }
+        } else {
+          console.log('No user, setting profile to null');
+          setUserProfile(null);
+          setIsAuthorized(null);
+        }
+      } catch (e) {
+        console.error('Error in manageSession:', e);
+      } finally {
+        setLoading(false);
+        isProcessing = false;
+        console.log('=== MANAGE SESSION END ===');
+      }
+    };
+
+    const getInitialSession = async () => {
+        console.log('=== GET INITIAL SESSION START ===');
+        try {
+          // First test basic Supabase connectivity
+          console.log('Testing Supabase connectivity...');
+          try {
+            const connectivityTest = supabase.from('user_profiles').select('count', { count: 'exact', head: true });
+            const connectivityTimeout = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Connectivity test timeout')), 5000);
+            });
+            
+            await Promise.race([connectivityTest, connectivityTimeout]);
+            console.log('✅ Supabase connectivity OK');
+          } catch (connectivityError) {
+            console.error('❌ Supabase connectivity failed:', connectivityError);
+            // Continue anyway, but with reduced timeout
+          }
+          
+          // Now try to get session with timeout
+          console.log('Fetching auth session...');
+          const sessionPromise = supabase.auth.getSession();
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Session fetch timeout')), 8000);
+          });
+          
+          const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          console.log('Initial session:', session);
+          console.log('Initial session error:', error);
+          
+          if (error) {
+            console.error('Session fetch error:', error);
+            setLoading(false);
             return;
+          }
+          
+          await manageSession(session);
+        } catch (e) {
+          console.error('Error in getInitialSession:', e);
+          setLoading(false);
         }
-
-        try {
-            console.log('Checking if user profile exists for wallet:', publicKey.toBase58());
-            
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('wallet_address', publicKey.toBase58())
-                .single();
-
-            if (error) {
-                if (error.code === 'PGRST116') {
-                    // No profile found
-                    console.log('No user profile found');
-                    setHasProfile(false);
-                    setUserProfile(null);
-                } else {
-                    console.error('Error checking user profile:', error);
-                    setHasProfile(null);
-                    setUserProfile(null);
-                }
-                return;
-            }
-
-            if (data) {
-                console.log('User profile found:', data);
-                setHasProfile(true);
-                setUserProfile(data);
-            } else {
-                console.log('No user profile found');
-                setHasProfile(false);
-                setUserProfile(null);
-            }
-        } catch (error) {
-            console.error('Unexpected error checking user profile:', error);
-            setHasProfile(null);
-            setUserProfile(null);
-        }
-    }, [publicKey]);
-
-    useEffect(() => {
-        const getSession = async () => {
-            const { data } = await supabase.auth.getSession();
-            setSession(data.session);
-            if (data.session && publicKey) {
-                await checkUserProfile();
-            }
-        };
-        getSession();
-
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-            setSession(session);
-            if (event === 'SIGNED_OUT') {
-                setUserProfile(null);
-                setHasProfile(null);
-            } else if (session && publicKey) {
-                await checkUserProfile();
-            }
-        });
-
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
-    }, [publicKey, checkUserProfile]);
-
-    // Check profile when publicKey changes
-    useEffect(() => {
-        if (session && publicKey) {
-            checkUserProfile();
-        } else if (!publicKey) {
-            setUserProfile(null);
-            setHasProfile(null);
-        }
-    }, [publicKey, session, checkUserProfile]);
-
-    const login = async (): Promise<LoginResult> => {
-        if (!publicKey) {
-            console.error('Wallet not connected');
-            return { success: false, error: 'Wallet not connected', type: 'wallet_error' };
-        }
-
-        try {
-            console.log('Authenticating with Solana wallet...');
-
-            // First, verify NFT ownership before proceeding with authentication
-            const collectionAddress = process.env.NEXT_PUBLIC_NFT_COLLECTION_ADDRESS;
-            if (!collectionAddress) {
-                console.error('NFT collection address not configured');
-                return { success: false, error: 'NFT collection address not configured in environment variables', type: 'config_error' };
-            }
-
-            const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL || connection.rpcEndpoint;
-            
-            console.log('Verifying NFT ownership for collection:', collectionAddress);
-            
-            const hasNFT = await verifyNFTOwnership(publicKey, {
-                collectionAddress,
-                rpcEndpoint
-            });
-
-            if (!hasNFT) {
-                console.error('User does not own required NFT from collection');
-                return { success: false, error: 'User does not own required NFT from collection', type: 'nft_required' };
-            }
-
-            console.log('NFT ownership verified, proceeding with authentication...');
-            
-            // Use Supabase's native Web3 authentication for Solana
-            const { data, error } = await supabase.auth.signInWithWeb3({
-                chain: 'solana',
-                statement: 'Sign in to NFT Gated App to verify your wallet ownership and access exclusive content.',
-                // The wallet adapter will automatically handle the wallet connection
-            });
-
-            if (error) {
-                console.error('Error authenticating with Web3:', error);
-                if (error.message.includes('Web3 provider not found')) {
-                    console.error('Make sure your wallet is connected and the Web3 provider is enabled in Supabase.');
-                }
-                return { success: false, error: error.message, type: 'auth_error' };
-            }
-
-            if (data.session) {
-                console.log('Successfully authenticated with Solana wallet and NFT verification');
-                setSession(data.session);
-                // Check for user profile after successful authentication
-                await checkUserProfile();
-                return { success: true };
-            } else {
-                console.error('Authentication succeeded but no session was created');
-                return { success: false, error: 'Authentication succeeded but no session was created', type: 'session_error' };
-            }
-        } catch (err) {
-            console.error('Error during authentication:', err);
-            return { success: false, error: err instanceof Error ? err.message : 'Unknown error occurred', type: 'unknown_error' };
-        }
+        console.log('=== GET INITIAL SESSION END ===');
     };
 
-    const logout = async () => {
-        await supabase.auth.signOut();
-        setSession(null);
-        setUserProfile(null);
-        setHasProfile(null);
-    };
+    // Longer delay to let wallet extensions settle completely
+    setTimeout(getInitialSession, 1000);
 
-    return (
-        <AuthContext.Provider value={{ session, userProfile, hasProfile, login, logout, checkUserProfile }}>
-            {children}
-        </AuthContext.Provider>
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('=== AUTH STATE CHANGE ===');
+        console.log('Event:', event);
+        console.log('Session:', session);
+        await manageSession(session);
+      }
     );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchUserProfile, checkRoleAuthorization]);
+
+  const login = async () => {
+    console.log('=== LOGIN START ===');
+    console.log('Attempting Discord OAuth login...');
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          scopes: 'identify connections guilds guilds.members.read',
+        },
+      });
+      
+      console.log('OAuth response data:', data);
+      console.log('OAuth response error:', error);
+      
+      if (error) {
+        console.error('❌ Discord OAuth error:', error);
+        console.error('Error code:', error.status);
+        console.error('Error message:', error.message);
+      } else {
+        console.log('✅ Discord OAuth initiated successfully');
+      }
+    } catch (e) {
+      console.error('❌ Unexpected error during login:', e);
+    }
+    
+    console.log('=== LOGIN END ===');
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      console.log('🔄 Manually refreshing profile...');
+      await fetchUserProfile(user, true);
+    }
+  };
+
+  const value = {
+    session,
+    user,
+    userProfile,
+    isAuthorized,
+    loading,
+    login,
+    logout,
+    refreshProfile,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-    return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
+
+
+

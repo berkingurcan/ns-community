@@ -1,23 +1,23 @@
 ---
 alwaysApply: true
 ---
-Of course. I have analyzed the development rules from your previous monorepo project and reviewed the provided documentation for your current "Project Hub" application (`UI.md`, `DATABASE.md`, `PROFILE_AND_ONBOARDING.md`, `technical_documentation.md`, `PROJECTS.md`).
+Of course. I have analyzed the development rules from your previous monorepo project and reviewed the provided documentation for your current "NSphere" application (`UI.md`, `DATABASE.md`, `PROFILE_AND_ONBOARDING.md`, `technical_documentation.md`, `PROJECTS.md`).
 
 I recognize that this project has a different architecture—a focused Next.js application, not a multi-package monorepo. The rules must reflect this reality, emphasizing its unique challenges and patterns, such as the Solana-based authentication flow and the use of Supabase as a backend service.
 
-Here is a proposed set of development rules, meticulously crafted for the "Project Hub" project. It adapts the philosophy of your previous rules to a new context, focusing on clarity, security, and maintainability.
+Here is a proposed set of development rules, meticulously crafted for the "NSphere" project. It adapts the philosophy of your previous rules to a new context, focusing on clarity, security, and maintainability.
 
 ***
 
-# Development & Documentation Protocol: Project Hub
+# Development & Documentation Protocol: NSphere
 
-**PRIMARY OBJECTIVE:** Your mission is to develop the "Project Hub," an exclusive, NFT-gated community platform. You must operate under the project's **"documentation-as-a-guide"** philosophy. The architectural documentation in the markdown files serves as the primary reference for the system's logic and structure. Your code should be a robust implementation of that documented architecture.
+**PRIMARY OBJECTIVE:** Your mission is to develop the "NSphere," an exclusive, NFT-gated community platform. You must operate under the project's **"documentation-as-a-guide"** philosophy. The architectural documentation in the markdown files serves as the primary reference for the system's logic and structure. Your code should be a robust implementation of that documented architecture.
 
 ---
 
 ## 1. Project Architecture Overview
 
-Project Hub is a **full-stack Next.js application** using the App Router. It is not a monorepo. Its architecture is built on three pillars:
+NSphere is a **full-stack Next.js application** using the App Router. It is not a monorepo. Its architecture is built on three pillars:
 
 *   **Next.js Frontend:** The core of the application, located in `src/`, handling UI, routing, and client-side logic.
 *   **Supabase Backend:** Provides the database, user authentication (via Web3), and storage. All interactions are managed through a central client (`src/lib/supabaseClient.ts`).

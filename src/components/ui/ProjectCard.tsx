@@ -2,7 +2,7 @@
 
 import { Project } from '@/types/project';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -10,13 +10,15 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import {
-  User,
-  Search,
+  Tag,
   Link2,
   Edit,
   Trash2,
   Calendar,
   RefreshCw,
+  Github,
+  Twitter,
+  ExternalLink
 } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -26,16 +28,36 @@ interface ProjectCardProps {
   canEdit?: boolean;
 }
 
+import { VariantProps } from 'class-variance-authority';
+
+//... (rest of the imports)
+
+const statusVariantMap: Record<Project['status'], VariantProps<typeof badgeVariants>['variant']> = {
+  showcase: 'default',
+  'NS-Only': 'destructive',
+  Archive: 'outline',
+  Draft: 'secondary',
+};
+
 export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: ProjectCardProps) {
+  const getHost = (url: string | undefined | null) => {
+    if (!url) return '';
+    try {
+      return new URL(url).host;
+    } catch {
+      return url;
+    }
+  }
+
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 group">
+    <Card className="hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
       <CardHeader className="pb-4">
-        {/* Project Logo and Name */}
+        {/* Project Image and Title */}
         <div className="flex items-start gap-4">
-          {project.logo_url ? (
+          {project.image_url ? (
             <img
-              src={project.logo_url}
-              alt={`${project.project_name} logo`}
+              src={project.image_url}
+              alt={`${project.title} logo`}
               className="w-16 h-16 object-cover rounded-xl border-2 border-border flex-shrink-0 group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
@@ -45,103 +67,81 @@ export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: Proj
           )}
           <div className="flex-1">
             <h3 className="text-xl font-bold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
-              {project.project_name}
+              {project.title}
             </h3>
             <div className="flex items-center text-sm text-muted-foreground mt-1">
-              <Calendar className="w-3 h-3 mr-1" />
-              {new Date(project.created_at).toLocaleDateString()}
+              <Badge variant={statusVariantMap[project.status]} className="capitalize">{project.status}</Badge>
             </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-grow">
 
-        {/* Elevator Pitch */}
+        {/* Project Description */}
         <div>
           <p className="text-muted-foreground leading-relaxed line-clamp-3">
-            {project.elevator_pitch}
+            {project.description}
           </p>
         </div>
 
-        {/* Founders */}
-        {project.founders.length > 0 && (
+        {/* Tags */}
+        {project.tags && project.tags.length > 0 && (
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
-              <User className="w-4 h-4 mr-1 text-muted-foreground" />
-              Founders&apos; X Handles
+              <Tag className="w-4 h-4 mr-1 text-muted-foreground" />
+              Tags
             </h4>
             <div className="flex flex-wrap gap-2">
-              {project.founders.map((founder, index) => (
+              {project.tags.slice(0, 5).map((tag, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
                   className="text-sm font-medium"
                 >
-                  {founder}
+                  {tag}
                 </Badge>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Looking For */}
-        {project.looking_for.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
-              <Search className="w-4 h-4 mr-1 text-purple-500" />
-              Looking For
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {project.looking_for.slice(0, 3).map((expertise, index) => (
-                <Badge
-                  key={index}
-                  className="bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700"
-                >
-                  {expertise}
-                </Badge>
-              ))}
-              {project.looking_for.length > 3 && (
-                <Badge variant="secondary" className="text-muted-foreground">
-                  +{project.looking_for.length - 3} more
-                </Badge>
+              {project.tags.length > 5 && (
+                  <Badge variant="secondary" className="text-muted-foreground">
+                    +{project.tags.length - 5} more
+                  </Badge>
               )}
             </div>
           </div>
         )}
 
         {/* Links */}
-        {project.links.length > 0 && (
-          <div>
+        {(project.github_url || project.live_url || project.twitter_url) && (
+           <div>
             <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
-              <Link2 className="w-4 h-4 mr-1 text-blue-500" />
-              Links
+                <Link2 className="w-4 h-4 mr-1 text-blue-500" />
+                Links
             </h4>
-            <div className="space-y-1">
-              {project.links.slice(0, 2).map((link, index) => (
-                <a
-                  key={index}
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium truncate transition-colors duration-200"
-                >
-                  {link.replace(/^https?:\/\//, '')}
-                </a>
-              ))}
-              {project.links.length > 2 && (
-                <p className="text-xs text-muted-foreground">
-                  +{project.links.length - 2} more link{project.links.length - 2 !== 1 ? 's' : ''}
-                </p>
-              )}
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {project.github_url && (
+                    <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        <Github className="w-3 h-3" /> GitHub
+                    </a>
+                )}
+                {project.twitter_url && (
+                    <a href={project.twitter_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        <Twitter className="w-3 h-3" /> Twitter/X
+                    </a>
+                )}
+                {project.live_url && (
+                    <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                        <ExternalLink className="w-3 h-3" /> {getHost(project.live_url)}
+                    </a>
+                )}
             </div>
-          </div>
+           </div>
         )}
       </CardContent>
 
       {/* Action Buttons */}
       {canEdit && (
-        <CardFooter className="flex gap-2 pt-4">
+        <CardFooter className="flex gap-2 pt-4 mt-auto">
           {onEdit && (
             <Button
               variant="outline"

@@ -1,6 +1,6 @@
-# UI Refactor Plan: Project Hub
+# UI Refactor Plan: NSphere
 
-**Objective:** To refactor the UI of the "Project Hub" application by upgrading to `shadcn/ui`, adopting a modern and clean design with a minimalist color palette, using `lucide-react` for icons, and implementing the "Maven Pro" font.
+**Objective:** To refactor the UI of the "NSphere" application by upgrading to `shadcn/ui`, adopting a modern and clean design with a minimalist color palette, using `lucide-react` for icons, and implementing the "new" font.
 
 This plan is designed to be comprehensive enough for a junior developer to follow.
 

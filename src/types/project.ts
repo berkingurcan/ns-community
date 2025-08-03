@@ -1,24 +1,38 @@
 export interface Project {
   id: string;
   user_id: string;
-  wallet_address: string;
-  project_name: string;
-  elevator_pitch: string;
-  links: string[];
-  founders: string[];
-  looking_for: string[];
-  logo_url?: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  github_url?: string;
+  live_url?: string;
+  twitter_url?: string;
+  tags: string[];
+  status: 'showcase' | 'NS-Only' | 'Archive' | 'Draft';
+  category: ProjectCategory;
+  collaboration_status: CollaborationStatus;
+  looking_for_collaboration: CollaborationType[];
+  collaboration_description?: string;
+  max_collaborators: number;
+  current_collaborators: number;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateProjectData {
-  project_name: string;
-  elevator_pitch: string;
-  links: string[];
-  founders: string[];
-  looking_for: string[];
-  logo_url?: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  github_url?: string;
+  live_url?: string;
+  twitter_url?: string;
+  tags: string[];
+  status: 'showcase' | 'NS-Only' | 'Archive' | 'Draft';
+  category: ProjectCategory;
+  collaboration_status: CollaborationStatus;
+  looking_for_collaboration: CollaborationType[];
+  collaboration_description?: string;
+  max_collaborators: number;
 }
 
 export interface UpdateProjectData extends Partial<CreateProjectData> {

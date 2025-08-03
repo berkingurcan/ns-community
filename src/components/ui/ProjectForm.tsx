@@ -5,42 +5,45 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from './ImageUpload';
 import { CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS, Project } from '@/types/project';
 import { Plus, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface ProjectFormProps {
   project?: Project;
-  onSubmit: (data: CreateProjectData | UpdateProjectData) => Promise<void>;
+  onCreate?: (data: CreateProjectData) => Promise<void>;
+  onUpdate?: (data: UpdateProjectData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
-  walletAddress: string;
 }
 
-export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, walletAddress }: ProjectFormProps) {
+export function ProjectForm({ project, onCreate, onUpdate, onCancel, isLoading = false }: ProjectFormProps) {
   const [formData, setFormData] = useState<CreateProjectData>({
-    project_name: '',
-    elevator_pitch: '',
-    links: [''],
-    founders: [''],
-    looking_for: [],
-    logo_url: '',
+    title: '',
+    description: '',
+    tags: [],
+    status: 'Draft',
+    image_url: '',
+    github_url: '',
+    live_url: '',
+    twitter_url: '',
   });
 
-  const [currentLink, setCurrentLink] = useState('');
-  const [currentFounder, setCurrentFounder] = useState('');
+  const [currentTag, setCurrentTag] = useState('');
 
   // Populate form if editing existing project
   useEffect(() => {
     if (project) {
       setFormData({
-        project_name: project.project_name,
-        elevator_pitch: project.elevator_pitch,
-        links: project.links.length > 0 ? project.links : [''],
-        founders: project.founders.length > 0 ? project.founders : [''],
-        looking_for: project.looking_for,
-        logo_url: project.logo_url || '',
+        title: project.title,
+        description: project.description,
+        tags: project.tags || [],
+        status: project.status,
+        image_url: project.image_url || '',
+        github_url: project.github_url || '',
+        live_url: project.live_url || '',
+        twitter_url: project.twitter_url || '',
       });
     }
   }, [project]);
@@ -52,91 +55,59 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
     }));
   };
 
-  const handleExpertiseToggle = (expertise: string) => {
-    setFormData(prev => ({
-      ...prev,
-      looking_for: prev.looking_for.includes(expertise)
-        ? prev.looking_for.filter(e => e !== expertise)
-        : [...prev.looking_for, expertise]
-    }));
-  };
-
-  const addLink = () => {
-    if (currentLink.trim()) {
+  const addTag = () => {
+    if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        links: prev.links.filter(link => link.trim() !== '')
-          .concat([currentLink.trim()])
+        tags: [...prev.tags, currentTag.trim()]
       }));
-      setCurrentLink('');
+      setCurrentTag('');
     }
   };
 
-  const removeLink = (index: number) => {
+  const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      links: prev.links.filter((_, i) => i !== index)
-    }));
-  };
-
-  const addFounder = () => {
-    if (currentFounder.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        founders: prev.founders.filter(founder => founder.trim() !== '')
-          .concat([currentFounder.trim()])
-      }));
-      setCurrentFounder('');
-    }
-  };
-
-  const removeFounder = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      founders: prev.founders.filter((_, i) => i !== index)
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
 
   const handleImageUploaded = (imageUrl: string) => {
     setFormData(prev => ({
       ...prev,
-      logo_url: imageUrl
+      image_url: imageUrl
     }));
   };
 
   const handleImageRemoved = () => {
     setFormData(prev => ({
       ...prev,
-      logo_url: ''
+      image_url: ''
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.project_name.trim() || !formData.elevator_pitch.trim()) {
-      alert('Please fill in the project name and elevator pitch');
-      return;
-    }
-
-    if (formData.founders.filter(f => f.trim() !== '').length === 0) {
-      alert('Please add at least one founder');
+    if (!formData.title.trim() || !formData.description.trim()) {
+      alert('Please fill in the project title and description');
       return;
     }
 
     // Clean up the data
     const cleanData = {
       ...formData,
-      links: formData.links.filter(link => link.trim() !== ''),
-      founders: formData.founders.filter(founder => founder.trim() !== ''),
-      logo_url: formData.logo_url || undefined, // Convert empty string to undefined
+      image_url: formData.image_url || undefined,
+      github_url: formData.github_url || undefined,
+      live_url: formData.live_url || undefined,
+      twitter_url: formData.twitter_url || undefined,
     };
 
-    const submitData = project 
-      ? { ...cleanData, id: project.id } as UpdateProjectData
-      : cleanData;
-
-    await onSubmit(submitData);
+    if (project && onUpdate) {
+      await onUpdate({ ...cleanData, id: project.id });
+    } else if (onCreate) {
+      await onCreate(cleanData);
+    }
   };
 
   return (
@@ -146,150 +117,115 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Project Name */}
+        {/* Project Title */}
         <div className="space-y-2">
-          <Label htmlFor="project_name">
-            Project Name *
+          <Label htmlFor="title">
+            Project Title *
           </Label>
           <Input
-            id="project_name"
+            id="title"
             type="text"
-            value={formData.project_name}
-            onChange={(e) => handleInputChange('project_name', e.target.value)}
-            placeholder="Enter your project name"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            placeholder="Enter your project title"
             required
           />
         </div>
 
-        {/* Project Logo */}
+        {/* Project Image */}
         <ImageUpload
-          currentImageUrl={formData.logo_url}
+          currentImageUrl={formData.image_url}
           onImageUploaded={handleImageUploaded}
           onImageRemoved={handleImageRemoved}
-          walletAddress={walletAddress}
-          isLoading={isLoading}
         />
 
-        {/* Elevator Pitch */}
+        {/* Project Description */}
         <div className="space-y-2">
-          <Label htmlFor="elevator_pitch">
-            Elevator Pitch *
+          <Label htmlFor="description">
+            Project Description *
           </Label>
           <Textarea
-            id="elevator_pitch"
-            value={formData.elevator_pitch}
-            onChange={(e) => handleInputChange('elevator_pitch', e.target.value)}
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
             rows={4}
-            placeholder="Describe your project in a few sentences..."
+            placeholder="Describe your project..."
             className="resize-vertical"
             required
           />
         </div>
-
-        {/* Founders */}
+        
+        {/* Tags */}
         <div className="space-y-2">
-          <Label>
-            Founders&apos; X Handles (optional)
-          </Label>
-          <div className="space-y-2">
-            {formData.founders.filter(f => f.trim() !== '').map((founder, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Badge variant="secondary" className="flex-1 justify-between px-3 py-2">
-                  {founder}
-                </Badge>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeFounder(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+          <Label>Tags</Label>
+          <div className="flex flex-wrap gap-2">
+            {formData.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                {tag}
+                <button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
             ))}
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={currentFounder}
-                onChange={(e) => setCurrentFounder(e.target.value)}
-                placeholder="Add founder name..."
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFounder())}
-                className="flex-1"
-              />
-              <Button type="button" onClick={addFounder} variant="outline" size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={currentTag}
+              onChange={(e) => setCurrentTag(e.target.value)}
+              placeholder="Add a tag..."
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+              className="flex-1"
+            />
+            <Button type="button" onClick={addTag} variant="outline" size="sm">
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        {/* Links */}
-        <div className="space-y-2">
-          <Label>
-            Project Links
-          </Label>
-          <div className="space-y-2">
-            {formData.links.filter(l => l.trim() !== '').map((link, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 px-3 py-2 bg-secondary text-primary rounded-md underline hover:text-primary/80 truncate"
-                >
-                  {link}
-                </a>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeLink(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                value={currentLink}
-                onChange={(e) => setCurrentLink(e.target.value)}
-                placeholder="https://..."
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLink())}
-                className="flex-1"
-              />
-              <Button type="button" onClick={addLink} variant="outline" size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
+        {/* Project Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="github_url">GitHub URL</Label>
+                <div className="relative">
+                    <Input id="github_url" type="url" value={formData.github_url} onChange={(e) => handleInputChange('github_url', e.target.value)} placeholder="github.com/your-repo" className="pl-10" />
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/></svg>
+                    </span>
+                </div>
             </div>
-          </div>
+            <div className="space-y-2">
+                <Label htmlFor="live_url">Live URL</Label>
+                <Input id="live_url" type="url" value={formData.live_url} onChange={(e) => handleInputChange('live_url', e.target.value)} placeholder="https://yourproject.com" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="twitter_url">X (Twitter) URL</Label>
+                <div className="relative">
+                    <Input id="twitter_url" type="url" value={formData.twitter_url} onChange={(e) => handleInputChange('twitter_url', e.target.value)} placeholder="x.com/your-handle" className="pl-10" />
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M18 4H6l-4 8 4 8h12l4-8z"/><path d="m12 12 4 8"/><path d="m8 12-4 8"/></svg>
+                    </span>
+                </div>
+            </div>
         </div>
-
-        {/* Looking For */}
+        
+        {/* Status */}
         <div className="space-y-2">
-          <Label>
-            Looking For (Expertise)
-          </Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {EXPERTISE_OPTIONS.map((expertise) => (
-              <Label
-                key={expertise}
-                className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
-                  formData.looking_for.includes(expertise)
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-background text-foreground hover:bg-secondary'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={formData.looking_for.includes(expertise)}
-                  onChange={() => handleExpertiseToggle(expertise)}
-                  className="sr-only"
-                />
-                <span className="text-sm">{expertise}</span>
-              </Label>
-            ))}
-          </div>
+            <Label>Status</Label>
+            <div className="flex gap-4">
+                {(['showcase', 'NS-Only', 'Archive', 'Draft'] as const).map(status => (
+                    <Label key={status} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="radio"
+                            name="status"
+                            value={status}
+                            checked={formData.status === status}
+                            onChange={(e) => handleInputChange('status', e.target.value as any)}
+                        />
+                        {status}
+                    </Label>
+                ))}
+            </div>
         </div>
 
         {/* Action Buttons */}

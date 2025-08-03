@@ -1,4 +1,4 @@
-# Projects Documentation: Project Hub
+# Projects Documentation: NSphere
 
 ## Overview
 

@@ -1,96 +1,55 @@
 
 'use client';
 
-import { useAuth } from '@/context/AuthContext';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-// Removed unused imports
-import { verifyNFTOwnership } from '@/lib/nftVerification';
+import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
-const withAuth = (WrappedComponent: React.ComponentType) => {
-    const AuthComponent = (props: React.ComponentProps<typeof WrappedComponent>) => {
-        const { session, hasProfile } = useAuth();
-        const { publicKey } = useWallet();
-        const { connection } = useConnection();
-        const router = useRouter();
-        const [hasNft, setHasNft] = useState(false);
-        const [loading, setLoading] = useState(true);
+export default function withAuth(WrappedComponent: React.ComponentType) {
+  const AuthComponent = (props: any) => {
+    const { session, loading, isAuthorized, userProfile } = useAuth();
+    const router = useRouter();
 
-        useEffect(() => {
-            const checkNft = async () => {
-                if (!session || !publicKey) {
-                    router.push('/');
-                    return;
-                }
+    useEffect(() => {
+      if (loading) {
+        return; // Wait until loading is finished
+      }
 
-                // If user doesn't have a profile, redirect to onboarding
-                if (hasProfile === false) {
-                    router.push('/onboarding');
-                    return;
-                }
+      if (!session) {
+        router.push('/'); // Not logged in, redirect to home
+        return;
+      }
+      
+      // Session exists, now check authorization and profile status
+      if (isAuthorized === false) {
+        router.push('/unauthorized'); // Logged in but not on the list
+        return;
+      }
 
-                // If we're still checking for profile, wait
-                if (hasProfile === null) {
-                    return;
-                }
+      if (userProfile && userProfile.status === 'needs_onboarding' && isAuthorized === true) {
+        router.push('/onboarding'); // Profile exists but needs onboarding
+        return;
+      }
 
-                try {
-                    // Get collection address from environment variables
-                    const collectionAddress = process.env.NEXT_PUBLIC_NFT_COLLECTION_ADDRESS;
-                    if (!collectionAddress) {
-                        console.error('NFT collection address not configured in environment variables');
-                        router.push('/unauthorized');
-                        return;
-                    }
+      if (userProfile === null && isAuthorized === true) {
+        // This shouldn't happen anymore since we auto-create profiles
+        router.push('/onboarding');
+        return;
+      }
 
-                    // Get RPC endpoint from environment variable (must support DAS API)
-                    const rpcEndpoint = process.env.NEXT_PUBLIC_RPC_URL || connection.rpcEndpoint;
-                    
-                    if (!rpcEndpoint) {
-                        console.error('RPC endpoint not configured. DAS API support required for compressed NFTs.');
-                        router.push('/unauthorized');
-                        return;
-                    }
+    }, [loading, session, isAuthorized, userProfile, router]);
 
-                    console.log('Verifying NFT ownership for collection:', collectionAddress);
-                    
-                    // Verify NFT ownership using the new compressed NFT verification
-                    const hasNFT = await verifyNFTOwnership(publicKey, {
-                        collectionAddress,
-                        rpcEndpoint
-                    });
+    // While loading, or if conditions for rendering are not met yet, show a loader.
+    if (loading || !session || isAuthorized !== true || !userProfile || userProfile.status !== 'active') {
+      return <div>Loading...</div>; // Or a more sophisticated loading component
+    }
 
-                    if (hasNFT) {
-                        console.log('User has required NFT from collection');
-                        setHasNft(true);
-                    } else {
-                        console.log('User does not have required NFT from collection');
-                        router.push('/unauthorized');
-                    }
-                } catch (error) {
-                    console.error('Error checking NFT ownership:', error);
-                    router.push('/unauthorized');
-                } finally {
-                    setLoading(false);
-                }
-            };
+    return <WrappedComponent {...props} />;
+  };
 
-            checkNft();
-        }, [session, publicKey, connection, router, hasProfile]);
+  AuthComponent.displayName = `withAuth(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
-        if (loading) {
-            return <div>Loading...</div>; // Or a loading spinner
-        }
+  return AuthComponent;
+}
 
-        if (!session || !hasNft || hasProfile === false || hasProfile === null) {
-            return null; // or a redirect component
-        }
 
-        return <WrappedComponent {...props} />;
-    };
-
-    return AuthComponent;
-};
-
-export default withAuth;

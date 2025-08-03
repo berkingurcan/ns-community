@@ -1,8 +1,8 @@
-# Technical Documentation: Project Hub
+# Technical Documentation: NSphere
 
 ## Overview
 
-Project Hub is a Next.js 14 application using the App Router, built with TypeScript and integrated with Supabase for backend services and Solana for NFT-gated authentication.
+NSphere is a Next.js 14 application using the App Router, built with TypeScript and integrated with Supabase for backend services and Solana for NFT-gated authentication.
 
 ## Architecture
 

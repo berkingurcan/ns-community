@@ -1,8 +1,8 @@
-# UI Documentation: Project Hub
+# UI Documentation: NSphere
 
 ## Overview
 
-The UI system for Project Hub is built with React components using Tailwind CSS for styling. All components are located in `src/components/ui/` and follow a consistent design pattern focused on the NFT-gated community experience.
+The UI system for NSphere is built with React components using Tailwind CSS for styling. All components are located in `src/components/ui/` and follow a consistent design pattern focused on the NFT-gated community experience.
 
 ## Component Library
 

@@ -4,13 +4,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/label';
 import { ImageUploadService } from '@/lib/imageUpload';
+import { useAuth } from '@/context/AuthContext';
 import { Image, X, Upload } from 'lucide-react';
 
 interface ImageUploadProps {
   currentImageUrl?: string;
   onImageUploaded: (imageUrl: string) => void;
   onImageRemoved: () => void;
-  walletAddress: string;
   isLoading?: boolean;
 }
 
@@ -18,9 +18,9 @@ export function ImageUpload({
   currentImageUrl, 
   onImageUploaded, 
   onImageRemoved, 
-  walletAddress, 
   isLoading = false 
 }: ImageUploadProps) {
+  const { session } = useAuth();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
@@ -50,7 +50,10 @@ export function ImageUpload({
   }, []);
 
   const handleFileSelect = useCallback(async (file: File) => {
-    if (!file) return;
+    if (!session?.user?.id) {
+      setErrorMessage("You must be logged in to upload an image.");
+      return;
+    }
 
     setErrorMessage(null);
 
@@ -72,12 +75,6 @@ export function ImageUpload({
     
     try {
       const uploadProcess = async () => {
-        // Check storage setup first
-        const setupCheck = await ImageUploadService.checkStorageSetup();
-        if (!setupCheck.isSetup) {
-          throw new Error(setupCheck.error || 'Storage not properly configured');
-        }
-
         // Create local preview immediately
         tempPreviewUrl = URL.createObjectURL(file);
         blobUrlsToCleanup.current.add(tempPreviewUrl);
@@ -96,7 +93,7 @@ export function ImageUpload({
         }
 
         // Upload to Supabase
-        const result = await ImageUploadService.uploadImage(fileToUpload, walletAddress);
+        const result = await ImageUploadService.uploadImage(fileToUpload, session.user.id);
         
         // Only clean up and update after successful upload
         if (tempPreviewUrl) {
@@ -145,7 +142,7 @@ export function ImageUpload({
       // Ensure uploading state is always reset
       setIsUploading(false);
     }
-  }, [walletAddress, currentImageUrl, onImageUploaded]);
+  }, [session, currentImageUrl, onImageUploaded]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -244,39 +241,38 @@ export function ImageUpload({
 
       {/* Upload Area */}
       {!previewUrl && (
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            isDragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50'
-          }`}
-        >
-          <div className="space-y-4">
-            <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
-              <Image className="w-8 h-8" />
+          <label
+            htmlFor="file-upload"
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+              isDragOver
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/50'
+            }`}
+          >
+            <div 
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className="space-y-4"
+            >
+              <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
+                <Image className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground mb-1">
+                  Drag and drop your logo here, or{' '}
+                  <span
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    browse files
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG, GIF, WebP up to 5MB
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-foreground mb-1">
-                Drag and drop your logo here, or{' '}
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={openFileDialog}
-                  disabled={isUploading || isLoading}
-                  className="p-0 h-auto"
-                >
-                  browse files
-                </Button>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                PNG, JPG, GIF, WebP up to 5MB
-              </p>
-            </div>
-          </div>
-        </div>
+          </label>
       )}
 
       {/* Action Buttons */}
@@ -297,6 +293,7 @@ export function ImageUpload({
 
       {/* Hidden File Input */}
       <input
+        id="file-upload"
         ref={fileInputRef}
         type="file"
         accept="image/*"

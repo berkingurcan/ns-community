@@ -1,0 +1,21 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS theme configuration directive for CSS-first design token definition"
+    },
+    {
+      "name": "@custom-variant", 
+      "description": "Tailwind CSS directive for defining custom utility variants"
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS directive for applying utility classes within custom CSS"
+    },
+    {
+      "name": "@variant",
+      "description": "Tailwind CSS directive for applying variants within custom CSS"
+    }
+  ]
+}

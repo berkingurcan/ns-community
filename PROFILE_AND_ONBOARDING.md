@@ -1,4 +1,4 @@
-# Profile & Onboarding Documentation: Project Hub
+# Profile & Onboarding Documentation: NSphere
 
 ## Overview
 

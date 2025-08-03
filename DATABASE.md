@@ -1,8 +1,8 @@
-# Database Documentation: Project Hub
+# Database Documentation: NSphere
 
 ## Overview
 
-Project Hub uses Supabase as its backend service, providing database, authentication, and storage capabilities. The database schema is designed to support NFT-gated community features with user profiles and project management.
+NSphere uses Supabase as its backend service, providing database, authentication, and storage capabilities. The database schema is designed to support NFT-gated community features with user profiles and project management.
 
 ## Database Schema
 
@@ -24,11 +24,13 @@ Project Hub uses Supabase as its backend service, providing database, authentica
 - `id`: UUID (primary key, references users.id)
 - `wallet_address`: String (Solana wallet address)
 - `username`: String (unique display name)
-- `bio`: Text (user biography)
+- `shill_yourself`: Text (user biography/self-promotion)
 - `avatar_url`: String (profile image URL)
-- `twitter_handle`: String (optional)
-- `github_handle`: String (optional)
-- `website_url`: String (optional)
+- `discord_id`: String (Discord username)
+- `expertises`: String[] (user's areas of expertise)
+- `x_handle`: String (X/Twitter handle)
+- `github`: String (GitHub username)
+- `website_url`: String (personal website URL)
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
@@ -44,12 +46,12 @@ Project Hub uses Supabase as its backend service, providing database, authentica
 - `user_id`: UUID (references user_profiles.id)
 - `title`: String (project title)
 - `description`: Text (project description)
-- `image_url`: String (project image URL)
+- `image_url`: String (optional, project image URL)
 - `github_url`: String (optional, GitHub repository)
 - `live_url`: String (optional, live demo URL)
 - `twitter_url`: String (optional, project Twitter)
 - `tags`: String[] (project tags/categories)
-- `status`: String (enum: 'active', 'archived', 'draft')
+- `status`: String (enum: 'active', 'archived', 'draft', default: 'draft')
 - `created_at`: Timestamp
 - `updated_at`: Timestamp
 
@@ -82,36 +84,36 @@ Project Hub uses Supabase as its backend service, providing database, authentica
 
 ### user_profiles
 ```sql
--- Users can read all profiles
-CREATE POLICY "Users can view all profiles" ON user_profiles
-FOR SELECT USING (true);
+-- Authenticated users can read all profiles
+CREATE POLICY "Authenticated users can view all profiles" ON user_profiles
+FOR SELECT TO authenticated USING (true);
 
--- Users can only update their own profile
-CREATE POLICY "Users can update own profile" ON user_profiles
-FOR UPDATE USING (auth.uid() = id);
+-- Authenticated users can only update their own profile
+CREATE POLICY "Authenticated users can update own profile" ON user_profiles
+FOR UPDATE TO authenticated USING (auth.uid() = id);
 
--- Users can only insert their own profile
-CREATE POLICY "Users can insert own profile" ON user_profiles
-FOR INSERT WITH CHECK (auth.uid() = id);
+-- Authenticated users can only insert their own profile
+CREATE POLICY "Authenticated users can insert own profile" ON user_profiles
+FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 ```
 
 ### projects
 ```sql
--- Users can read all projects
-CREATE POLICY "Users can view all projects" ON projects
-FOR SELECT USING (true);
+-- Authenticated users can read all projects
+CREATE POLICY "Authenticated users can view all projects" ON projects
+FOR SELECT TO authenticated USING (true);
 
--- Users can only create projects for themselves
-CREATE POLICY "Users can create own projects" ON projects
-FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Authenticated users can only create projects for themselves
+CREATE POLICY "Authenticated users can insert own projects" ON projects
+FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
--- Users can only update their own projects
-CREATE POLICY "Users can update own projects" ON projects
-FOR UPDATE USING (auth.uid() = user_id);
+-- Authenticated users can only update their own projects
+CREATE POLICY "Authenticated users can update own projects" ON projects
+FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 
--- Users can only delete their own projects
-CREATE POLICY "Users can delete own projects" ON projects
-FOR DELETE USING (auth.uid() = user_id);
+-- Authenticated users can only delete their own projects
+CREATE POLICY "Authenticated users can delete own projects" ON projects
+FOR DELETE TO authenticated USING (auth.uid() = user_id);
 ```
 
 ## Data Access Patterns
@@ -174,10 +176,12 @@ export interface UserProfile {
   id: string;
   wallet_address: string;
   username: string;
-  bio?: string;
+  shill_yourself?: string;
   avatar_url?: string;
-  twitter_handle?: string;
-  github_handle?: string;
+  discord_id?: string;
+  expertises?: string[];
+  x_handle?: string;
+  github?: string;
   website_url?: string;
   created_at: string;
   updated_at: string;
