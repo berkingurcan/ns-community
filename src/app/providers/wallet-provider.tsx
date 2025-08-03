@@ -60,6 +60,7 @@ export default function Wallet({ children }: { children: React.ReactNode }) {
     const wallets = useMemo(
         () => [
             // Popular wallets first
+            // Note: Phantom auto-detects via Wallet Standard, but keeping adapter for compatibility
             new PhantomWalletAdapter(),
             new SolflareWalletAdapter({ network }),
             
@@ -72,8 +73,8 @@ export default function Wallet({ children }: { children: React.ReactNode }) {
             new BitKeepWalletAdapter(),
             new LedgerWalletAdapter(),
             
-            // Note: Backpack uses Wallet Standard and will be auto-detected
-            // Following official Solana cookbook pattern for Wallet Standard support
+            // Note: Backpack and other Wallet Standard wallets auto-detect
+            // Following official Solana cookbook pattern for modern wallet support
         ],
         [network]
     );

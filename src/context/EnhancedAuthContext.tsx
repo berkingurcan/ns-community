@@ -137,17 +137,18 @@ export const EnhancedAuthProvider = ({ children }: { children: React.ReactNode }
             .eq('wallet_address', publicKey.toBase58())
             .single(),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Profile check timeout')), 5000)
+            setTimeout(() => reject(new Error('Profile check timeout')), 10000) // Increased to 10 seconds
           )
         ]);
         
         ({ data, error } = result as any);
       } catch (timeoutError) {
-        console.warn('👤 Profile check timed out, assuming no profile exists');
-        // On timeout, assume no profile exists rather than crashing
+        console.warn('👤 Profile check timed out after 10 seconds');
+        console.warn('👤 This could indicate network issues or database slowness');
+        // Don't assume no profile - keep hasProfile as null (loading state) during timeout
         setAuthState(prev => ({ 
           ...prev, 
-          hasProfile: false, 
+          hasProfile: null, // Keep as loading rather than false
           userProfile: null 
         }));
         return;
@@ -312,10 +313,13 @@ export const EnhancedAuthProvider = ({ children }: { children: React.ReactNode }
     };
   }, [publicKey, checkUserProfile, validateSessionWallet]);
 
-  // Validate network and session when wallet changes
+  // Validate network and session when wallet changes (with debouncing)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const runValidations = async () => {
       if (publicKey) {
+        console.log('🔄 Running auth validations after wallet change...');
         await validateCurrentNetwork();
         await validateSessionWallet();
         
@@ -333,7 +337,14 @@ export const EnhancedAuthProvider = ({ children }: { children: React.ReactNode }
       }
     };
 
-    runValidations();
+    // Debounce API calls - wait 1 second before running validations
+    timeoutId = setTimeout(() => {
+      runValidations();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [publicKey, authState.session]);
 
   const login = async (): Promise<LoginResult> => {

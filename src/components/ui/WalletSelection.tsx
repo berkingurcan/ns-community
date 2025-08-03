@@ -99,6 +99,15 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
   const [isConnecting, setIsConnecting] = useState(false);
   const [showMoreWallets, setShowMoreWallets] = useState(false);
 
+  // Debug wallets on mount
+  useEffect(() => {
+    console.log('🔍 WalletSelection: Available wallet adapters:', wallets.map(w => ({
+      name: w.adapter.name,
+      readyState: w.adapter.readyState,
+      connected: w.adapter.connected
+    })));
+  }, [wallets]);
+
   // Note: Global error handling is now done in layout.tsx to avoid conflicts
 
   // Real-time extension monitoring - Critical for detecting late injection
@@ -195,304 +204,98 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
   }, [wallet?.adapter?.name, connected, publicKey, onWalletSelect]);
 
   const handleWalletClick = async (walletName: WalletName) => {
-    // Check if we're already connected to this exact wallet
-    if (connected && wallet?.adapter?.name === walletName) {
-      console.log(`Already connected to ${walletName}, disconnecting...`);
-      await disconnect();
-      setSelectedWallet(null);
-      return;
-    }
-
-    setSelectedWallet(walletName);
+    console.log(`🎯 Attempting to connect to wallet: ${walletName}`);
     setIsConnecting(true);
     
     try {
-      console.log(`Attempting to connect to wallet: ${walletName}`);
-      
-      // BYPASS 1: If publicKey exists, wallet is already working - skip adapter detection
-      if (publicKey && connected) {
-        console.log(`🚀 BYPASS: Wallet already connected with publicKey, skipping adapter detection`);
-        console.log(`✅ Using existing connection: ${publicKey.toBase58()}`);
+      // If already connected to this wallet, do nothing
+      if (connected && wallet?.adapter?.name === walletName && publicKey) {
+        console.log(`✅ Already connected to ${walletName}`);
+        setSelectedWallet(walletName);
         onWalletSelect?.(walletName);
         return;
       }
-      
-      // BYPASS 2: Check for direct wallet availability (for any wallet, not just Phantom)
-      const directWalletCheck = (() => {
-        switch (walletName) {
-          case 'Phantom':
-            return (window as any)?.phantom?.solana?.isConnected;
-          case 'Backpack':
-            return (window as any)?.backpack?.solana?.isConnected;
-          case 'Solflare':
-            return (window as any)?.solflare?.isConnected;
-          default:
-            return false;
-        }
-      })();
-      
-      if (directWalletCheck) {
-        console.log(`🚀 BYPASS: ${walletName} already connected directly in browser`);
-        try {
-          const walletProvider = (() => {
-            switch (walletName) {
-              case 'Phantom': return (window as any).phantom.solana;
-              case 'Backpack': return (window as any).backpack.solana;
-              case 'Solflare': return (window as any).solflare;
-              default: return null;
-            }
-          })();
-          
-          if (walletProvider?.publicKey) {
-            console.log(`✅ Using existing ${walletName} connection: ${walletProvider.publicKey.toString()}`);
-            setSelectedWallet(walletName);
-            onWalletSelect?.(walletName);
-            return;
-          }
-        } catch (error) {
-          console.warn(`⚠️ Direct ${walletName} check failed, continuing with adapter...`);
-        }
-      }
-      
-      // Force disconnect any existing connection first (even if connected=false)
-      if (wallet?.adapter || connected) {
-        console.log(`🔄 Clearing existing wallet connection (${wallet?.adapter?.name})...`);
+
+      // Disconnect from any existing wallet first
+      if (connected) {
+        console.log(`🔄 Disconnecting from ${wallet?.adapter?.name} to switch to ${walletName}`);
         await disconnect();
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Even longer wait for cleanup
-      }
-      
-      // Clear any previous wallet state
-      setSelectedWallet(null);
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Critical: Force select the EXACT wallet requested
-      console.log(`🎯 Selecting wallet: ${walletName} (FORCED)`);
-      select(walletName);
-      
-      // Verify the correct wallet was selected
-      await new Promise(resolve => setTimeout(resolve, 500));
-      console.log(`🔍 Verification: Selected wallet is now: ${wallet?.adapter?.name}`);
-      
-      if (wallet?.adapter?.name && wallet.adapter.name !== walletName) {
-        console.error(`❌ WALLET MISMATCH! Expected: ${walletName}, Got: ${wallet.adapter.name}`);
-        // Try to force select again
-        select(walletName);
         await new Promise(resolve => setTimeout(resolve, 500));
       }
+
+      // Check if wallet is available before selecting
+      const availableWallets = wallets.map(w => w.adapter.name);
+      console.log(`🔍 Available wallets:`, availableWallets);
+      console.log(`🎯 Looking for wallet:`, walletName);
+      console.log(`📱 Wallets detail:`, wallets.map(w => ({
+        name: w.adapter.name,
+        readyState: w.adapter.readyState,
+        publicKey: w.adapter.publicKey?.toString(),
+        connected: w.adapter.connected
+      })));
       
-      // Wait for wallet to be properly selected with ULTRA aggressive monitoring
-      console.log('Waiting for wallet to be selected with dual detection...');
+      if (!availableWallets.includes(walletName)) {
+        console.error(`❌ ${walletName} not found in available wallets`);
+        console.error(`Available: [${availableWallets.join(', ')}]`);
+        throw new Error(`${walletName} wallet is not available. Available wallets: ${availableWallets.join(', ')}`);
+      }
+
+      // Select the requested wallet
+      console.log(`🔧 Selecting ${walletName} adapter...`);
+      select(walletName);
+      
+      // Wait for selection to complete with retries
       let attempts = 0;
-      const maxAttempts = 30; // More attempts
-      let walletFound = false;
+      const maxAttempts = 10;
       
-      while (attempts < maxAttempts && !walletFound) {
-        await new Promise(resolve => setTimeout(resolve, 150)); // Faster polling
+      while (attempts < maxAttempts && wallet?.adapter?.name !== walletName) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        console.log(`[${attempts + 1}/${maxAttempts}] Waiting for ${walletName} selection...`);
         
-        // DUAL DETECTION: Check both adapter AND browser wallet object
-        const hasWallet = wallet?.adapter;
-        const correctName = wallet?.adapter?.name === walletName;
-        const notConnecting = wallet?.adapter?.connecting === false;
-        const isConnected = wallet?.adapter?.connected === true;
-        const isReady = wallet?.adapter?.readyState === 'Installed';
-        
-        // Also check browser wallet directly (critical for extension conflicts!)
-        const browserWallet = (() => {
-          switch (walletName) {
-            case 'Phantom': 
-              return (window as any)?.phantom?.solana;
-            case 'Backpack': 
-              return (window as any)?.backpack?.solana;
-            case 'Solflare': 
-              return (window as any)?.solflare;
-            default: 
-              return null;
-          }
-        })();
-        
-        const hasBrowserWallet = !!browserWallet;
-        const browserConnected = browserWallet?.isConnected;
-        
-        console.log(`[${attempts + 1}/${maxAttempts}] Detection Status:`, {
-          adapter: {
-            exists: !!hasWallet,
-            name: wallet?.adapter?.name,
-            ready: isReady,
-            connected: isConnected
-          },
-          browser: {
-            exists: hasBrowserWallet,
-            connected: browserConnected,
-            type: walletName
-          }
-        });
-        
-        // SUCCESS CONDITIONS: Either adapter ready OR browser wallet available
-        if ((hasWallet && (correctName || isConnected)) || hasBrowserWallet) {
-          console.log(`✅ ${walletName} detected and ready! (adapter: ${!!hasWallet}, browser: ${hasBrowserWallet})`);
-          walletFound = true;
-          break;
+        if (wallet?.adapter?.name !== walletName && attempts === 2) {
+          // Retry selection after a few attempts
+          console.log(`🔄 Retrying ${walletName} selection...`);
+          select(walletName);
         }
         
         attempts++;
       }
-      
-      // More forgiving final check with better error messaging
-      if (!walletFound) {
-        // Try one more time with a longer delay and force connect
-        console.log(`Final attempt to connect ${walletName}...`);
-        console.log('Debug wallet state:', { 
-          hasWallet: !!wallet?.adapter, 
-          walletName: wallet?.adapter?.name, 
-          connecting: wallet?.adapter?.connecting,
-          connected: wallet?.adapter?.connected 
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // More lenient - try connecting even if polling failed
-        if (wallet?.adapter?.name === walletName) {
-          console.log(`Found ${walletName} adapter, proceeding with connection despite polling timeout...`);
-          walletFound = true;
-        } else if (wallet?.adapter?.connected) {
-          console.log(`Wallet already connected (${wallet.adapter.name}), proceeding...`);
-          walletFound = true;
-        } else if (!wallet?.adapter) {
-          // FALLBACK: Check if specific wallet exists in browser even if adapter isn't detected
-          const walletInBrowser = (() => {
-            switch (walletName) {
-              case 'Phantom': return (window as any)?.phantom?.solana;
-              case 'Solflare': return (window as any)?.solflare;
-              case 'Backpack': return (window as any)?.backpack;
-              default: return null;
-            }
-          })();
-          
-          if (walletInBrowser) {
-            console.warn(`⚠️ ${walletName} exists in browser but adapter not detected. Trying direct connection...`);
-            
-            // Try direct connection bypass for supported wallets
-            try {
-              let connected = false;
-              if (walletName === 'Phantom') {
-                await (window as any).phantom.solana.connect();
-                connected = true;
-              } else if (walletName === 'Backpack') {
-                // Backpack might use slightly different connection method
-                const backpackWallet = (window as any).backpack?.solana;
-                if (backpackWallet) {
-                  await backpackWallet.connect();
-                  connected = true;
-                  console.log(`🎒 Backpack direct connection established`);
-                }
-              }
-              
-              if (connected) {
-                console.log(`✅ Direct ${walletName} connection successful!`);
-                setSelectedWallet(walletName);
-                onWalletSelect?.(walletName);
-                return;
-              }
-            } catch (directError) {
-              console.warn(`⚠️ Direct ${walletName} connection failed:`, (directError as Error).message);
-            }
-          }
-          
-          // Graceful handling - don't throw error, just log warning
-          console.warn(`⚠️ ${walletName} extension not available or not properly initialized.`);
-          console.info(`💡 To use ${walletName}:`);
-          console.info(`   1. Install the ${walletName} browser extension`);
-          console.info(`   2. Refresh the page`);
-          console.info(`   3. Try connecting again`);
-          
-          // Don't throw error - just return gracefully
-          return;
-        } else if (wallet.adapter.name !== walletName) {
-          throw new Error(`Wrong wallet selected (${wallet.adapter.name} instead of ${walletName}). Please try again.`);
-        }
+
+      // Final check
+      if (wallet?.adapter?.name !== walletName) {
+        console.error(`❌ Wallet selection failed after ${maxAttempts} attempts`);
+        console.error(`Available wallets:`, availableWallets);
+        console.error(`Selected wallet:`, wallet?.adapter?.name || 'none');
+        throw new Error(`Could not select ${walletName}. Please try refreshing the page and ensure ${walletName} is properly installed.`);
       }
-      
-      // CRITICAL: Final verification before connecting (with Wallet Standard support)
-      const finalVerification = wallet?.adapter?.name;
-      console.log(`🔒 FINAL VERIFICATION: About to connect to ${finalVerification}, Expected: ${walletName}`);
-      console.log(`🔍 Wallet Standard Info:`, {
-        isStandard: !!(wallet?.adapter as any)?.standard,
-        icon: (wallet?.adapter as any)?.icon,
-        url: (wallet?.adapter as any)?.url
-      });
-      
-      // More flexible matching for Wallet Standard wallets
-      const isCorrectWallet = finalVerification === walletName || 
-                             (walletName === 'Backpack' && finalVerification === 'Backpack') ||
-                             (walletName === 'Backpack' && (wallet?.adapter as any)?.standard && finalVerification?.includes('Backpack'));
-      
-      if (!isCorrectWallet && finalVerification) {
-        console.error(`🚨 CRITICAL WALLET MISMATCH!`);
-        console.error(`Expected: ${walletName}`);
-        console.error(`Adapter says: ${finalVerification}`);
-        console.error(`This would cause wrong wallet to sign! STOPPING.`);
-        
-        // Force re-select the correct wallet one more time
-        console.log(`🔄 Emergency re-select attempt for ${walletName}...`);
-        select(walletName);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (wallet?.adapter?.name !== walletName) {
-          throw new Error(`Wallet selection failed. Expected ${walletName} but got ${wallet?.adapter?.name}. Please try again.`);
-        }
-      }
-      
-      // Try to connect
-      console.log(`🔗 Connecting to wallet: ${walletName} (VERIFIED: ${wallet?.adapter?.name})`);
+
+      // Connect to the wallet
+      console.log(`🔗 Connecting to ${walletName}...`);
       await connect();
-      console.log(`✅ Successfully connected to wallet: ${walletName}`);
       
-      // Update state and notify parent
+      console.log(`✅ Successfully connected to ${walletName}`);
       setSelectedWallet(walletName);
       onWalletSelect?.(walletName);
-      
+
     } catch (error) {
-      console.error(`Wallet connection failed for ${walletName}:`, error);
+      console.error(`❌ Failed to connect to ${walletName}:`, error);
       setSelectedWallet(null);
       
-      // Show user-friendly error messages
+      // User-friendly error handling
       if (error instanceof Error) {
         const errorMessage = error.message.toLowerCase();
-        const errorStack = error.stack?.toLowerCase() || '';
-        
-        // Handle browser extension runtime errors
-        if (errorMessage.includes('runtime.lasterror') || 
-            errorMessage.includes('receiving end does not exist') ||
-            errorMessage.includes('extension context invalidated') ||
-            errorStack.includes('chrome-extension://')) {
-          console.warn(`${walletName}: Browser extension conflict detected. This is usually harmless.`);
-          console.error(`Extension runtime error with ${walletName}: Please try refreshing the page or restart your browser.`);
-          return;
-        }
         
         if (errorMessage.includes('user rejected') || errorMessage.includes('user declined')) {
-          console.warn('Connection was rejected by user');
-          // Don't throw error for user rejection - just reset state
+          console.log('User cancelled wallet connection');
           return;
-        } else if (errorMessage.includes('wallet not found') || 
-                   errorMessage.includes('not installed') ||
-                   errorMessage.includes('extension not detected')) {
-          console.error(`${walletName} is not installed. Please install the wallet extension first.`);
-        } else if (errorMessage.includes('wallet is locked') || 
-                   errorMessage.includes('not ready')) {
-          console.error(`${walletName} is locked. Please unlock your wallet and try again.`);
-        } else if (errorMessage.includes('wrong wallet selected')) {
-          console.error(`Wallet mismatch detected. Please try connecting again.`);
+        } else if (errorMessage.includes('not installed') || errorMessage.includes('not found')) {
+          console.error(`${walletName} wallet is not installed. Please install it first.`);
+        } else if (errorMessage.includes('locked')) {
+          console.error(`${walletName} wallet is locked. Please unlock it and try again.`);
         } else {
           console.error(`Failed to connect to ${walletName}. Please make sure it's installed and unlocked.`);
         }
-      } else {
-        // Handle non-Error objects
-        console.error(`Unknown error connecting to ${walletName}:`, error);
       }
-      
-      // Don't re-throw errors - just log them and reset state
-      // This prevents unhandled promise rejections
     } finally {
       setIsConnecting(false);
     }

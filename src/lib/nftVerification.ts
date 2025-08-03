@@ -5,6 +5,10 @@ export interface NFTVerificationConfig {
   rpcEndpoint: string;
 }
 
+// Simple cache to prevent repeated API calls for same wallet
+const verificationCache = new Map<string, { result: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 // DAS API response interfaces
 interface DASAsset {
   id: string;
@@ -45,6 +49,16 @@ export async function verifyNFTOwnership(
   config: NFTVerificationConfig
 ): Promise<boolean> {
   try {
+    const cacheKey = `${walletAddress.toString()}-${config.collectionAddress}`;
+    const now = Date.now();
+    
+    // Check cache first
+    const cached = verificationCache.get(cacheKey);
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('✅ Using cached NFT verification result for:', walletAddress.toString());
+      return cached.result;
+    }
+
     // Check if user is trying to use standard Solana RPC (which won't work)
     if (config.rpcEndpoint.includes('api.mainnet-beta.solana.com') || 
         config.rpcEndpoint.includes('api.devnet.solana.com') ||
@@ -54,7 +68,7 @@ export async function verifyNFTOwnership(
       throw new Error('RPC endpoint does not support DAS API. Please use Helius, QuickNode, or another DAS-compatible provider.');
     }
 
-    console.log('Checking NFT ownership for wallet:', walletAddress.toString());
+    console.log('🔍 Checking NFT ownership for wallet:', walletAddress.toString());
     console.log('Collection address:', config.collectionAddress);
     console.log('Using RPC endpoint:', config.rpcEndpoint);
 
@@ -80,9 +94,19 @@ export async function verifyNFTOwnership(
     });
 
     console.log('Has collection NFT:', hasCollectionNFT);
+    
+    // Cache the result
+    verificationCache.set(cacheKey, { result: hasCollectionNFT, timestamp: now });
+    
     return hasCollectionNFT;
   } catch (error) {
     console.error('Error verifying NFT ownership:', error);
+    
+    // Cache negative result for shorter time (1 minute) in case of errors
+    const cacheKey = `${walletAddress.toString()}-${config.collectionAddress}`;
+    const now = Date.now();
+    verificationCache.set(cacheKey, { result: false, timestamp: now - CACHE_DURATION + 60000 });
+    
     return false;
   }
 }
