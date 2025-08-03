@@ -1,14 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, User, Link2, LogOut, Loader2, Mail, Zap } from 'lucide-react';
+import { CollaborationRequestsModal } from '@/components/ui/CollaborationRequestsModal';
+import { Briefcase, User, Link2, LogOut, Loader2, Mail, Zap, MessageSquare, Coins } from 'lucide-react';
 
 export function Navigation() {
-  const { session, userProfile, login, logout, loading, isAuthorized } = useAuth();
+  const { session, userProfile, coinBalance, login, logout, loading, isAuthorized } = useAuth();
   const router = useRouter();
+  const [showCollabRequests, setShowCollabRequests] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -31,11 +34,29 @@ export function Navigation() {
             <Zap className="w-4 h-4" />
             Opportunities
           </Button>
+          <Button onClick={() => setShowCollabRequests(true)} variant="secondary" className="hidden sm:flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Requests
+          </Button>
           <Button onClick={() => router.push('/profile')} variant="secondary" className="hidden sm:flex items-center gap-2">
             <User className="w-4 h-4" />
             Profile
           </Button>
           <div className="flex items-center space-x-3">
+            {/* Continental Coin Balance Badge */}
+            {coinBalance !== null && (
+              <Button 
+                onClick={() => router.push('/coins')} 
+                variant="outline" 
+                size="sm"
+                className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 hover:from-yellow-100 hover:to-amber-100 text-amber-700 hover:text-amber-800 shadow-sm"
+                title="Continental Coins - Every collaboration = 1 coin"
+              >
+                <Coins className="w-4 h-4" />
+                <span className="font-semibold">{coinBalance.balance}</span>
+                <span className="text-xs opacity-75">Continental</span>
+              </Button>
+            )}
             {userProfile && (
               <Badge variant="secondary" className="hidden sm:flex">
                 {userProfile.username}
@@ -92,6 +113,13 @@ export function Navigation() {
           </div>
         </div>
       </div>
+      
+      {/* Collaboration Requests Modal */}
+      <CollaborationRequestsModal
+        isOpen={showCollabRequests}
+        onClose={() => setShowCollabRequests(false)}
+        currentUserId={userProfile?.id}
+      />
     </nav>
   );
 }

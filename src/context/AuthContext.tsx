@@ -4,6 +4,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Session, User } from '@supabase/supabase-js';
+import { CoinService } from '@/lib/coins';
+import { UserCoinBalance } from '@/types/coin';
 
 export interface UserProfile {
     id: string;
@@ -23,28 +25,33 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   userProfile: UserProfile | null;
+  coinBalance: UserCoinBalance | null;
   isAuthorized: boolean | null; // null: unknown, false: not allowed, true: allowed
   loading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshCoinBalance: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   userProfile: null,
+  coinBalance: null,
   isAuthorized: null,
   loading: true,
   login: async () => {},
   logout: async () => {},
   refreshProfile: async () => {},
+  refreshCoinBalance: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [coinBalance, setCoinBalance] = useState<UserCoinBalance | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -252,6 +259,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }, 1000);
           }
           
+          // Load coin balance in background
+          setTimeout(async () => {
+            try {
+              console.log('🪙 Loading coin balance...');
+              const balance = await CoinService.getUserBalance(currentUser.id);
+              setCoinBalance(balance);
+              console.log('✅ Coin balance loaded:', balance.balance);
+            } catch (e) {
+              console.warn('⚠️ Coin balance loading failed:', e.message);
+            }
+          }, 500);
+          
           // Role authorization with shorter timeout
           try {
             const rolePromise = checkRoleAuthorization(currentUser);
@@ -269,6 +288,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           console.log('No user, setting profile to null');
           setUserProfile(null);
+          setCoinBalance(null);
           setIsAuthorized(null);
           setLoading(false);
         }
@@ -381,15 +401,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const refreshCoinBalance = async () => {
+    if (user) {
+      console.log('🪙 Refreshing coin balance...');
+      try {
+        const balance = await CoinService.getUserBalance(user.id);
+        setCoinBalance(balance);
+      } catch (error) {
+        console.error('❌ Error refreshing coin balance:', error);
+      }
+    }
+  };
+
   const value = {
     session,
     user,
     userProfile,
+    coinBalance,
     isAuthorized,
     loading,
     login,
     logout,
     refreshProfile,
+    refreshCoinBalance,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

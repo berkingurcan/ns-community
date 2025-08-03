@@ -5,20 +5,27 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 import { ProjectService } from '@/lib/projects';
+import { CoinService } from '@/lib/coins';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { ProjectForm } from '@/components/ui/ProjectForm';
 import { ProfileEditModal } from '@/components/ui/ProfileEditModal';
-import { Briefcase, Edit, Save, X, Loader2, RefreshCw, Download, User, Github, Twitter, Zap, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Briefcase, Edit, Save, X, Loader2, RefreshCw, Download, User, Github, Twitter, Zap, ChevronLeft, ChevronRight, Plus, Coins, TrendingUp, History, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { ProfileFormData, EXPERTISE_OPTIONS, validateProfileForm, extractProfileFromDiscord } from '@/types/profile';
 import { Project, UpdateProjectData } from '@/types/project';
+import { CoinTransaction, COIN_TRANSACTION_LABELS, COIN_TRANSACTION_COLORS } from '@/types/coin';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
-  const { session, userProfile, refreshProfile, loading } = useAuth();
+  const { session, userProfile, coinBalance, refreshProfile, loading } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showProfileEdit, setShowProfileEdit] = useState(false);
+  
+  // Coin transactions state
+  const [recentTransactions, setRecentTransactions] = useState<CoinTransaction[]>([]);
 
   // Projects carousel state
   const [userProjects, setUserProjects] = useState<Project[]>([]);
@@ -42,10 +49,23 @@ export default function ProfilePage() {
     }
   };
 
-  // Load projects when userProfile is available
+  // Load recent coin transactions
+  const loadRecentTransactions = async () => {
+    if (!userProfile?.id) return;
+    
+    try {
+      const transactions = await CoinService.getUserTransactions(userProfile.id);
+      setRecentTransactions(transactions.slice(0, 5)); // Show last 5 transactions
+    } catch (error) {
+      console.error('Error loading recent transactions:', error);
+    }
+  };
+
+  // Load projects and transactions when userProfile is available
   useEffect(() => {
     if (userProfile) {
       loadUserProjects();
+      loadRecentTransactions();
     }
   }, [userProfile]);
 
@@ -198,6 +218,18 @@ export default function ProfilePage() {
     return userProjects.slice(startIndex, startIndex + projectsPerPage);
   };
 
+  const formatTransactionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+
+    if (diffDays > 0) return `${diffDays}d ago`;
+    if (diffHours > 0) return `${diffHours}h ago`;
+    return 'Just now';
+  };
+
   if (!userProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -347,6 +379,94 @@ export default function ProfilePage() {
                     <p className="text-muted-foreground italic text-sm">No expertises selected yet...</p>
                   )}
                 </div>
+              </div>
+
+              {/* Coin Balance Card */}
+              <div className="bg-card rounded-xl border border-amber-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                    <Coins className="w-4 h-4 text-amber-600" />
+                    Continental Coins
+                  </h3>
+                  <Button
+                    onClick={() => router.push('/coins')}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-amber-200 text-amber-600 hover:bg-amber-50"
+                  >
+                    Continental Rules
+                  </Button>
+                </div>
+                
+                {coinBalance ? (
+                  <div className="space-y-4">
+                    {/* Balance Stats */}
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                        <div className="text-lg font-bold text-amber-700 dark:text-amber-400">
+                          {coinBalance.balance}
+                        </div>
+                        <div className="text-xs text-amber-600 dark:text-amber-500">Balance</div>
+                      </div>
+                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                        <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
+                          {coinBalance.totalEarned}
+                        </div>
+                        <div className="text-xs text-emerald-600 dark:text-emerald-500">Earned</div>
+                      </div>
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="text-lg font-bold text-blue-700 dark:text-blue-400">
+                          {coinBalance.totalSpent}
+                        </div>
+                        <div className="text-xs text-blue-600 dark:text-blue-500">Spent</div>
+                      </div>
+                    </div>
+
+                    {/* Recent Transactions */}
+                    {recentTransactions.length > 0 && (
+                      <div>
+                        <h4 className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                          <History className="w-3 h-3" />
+                          Recent Activity
+                        </h4>
+                        <div className="space-y-1">
+                          {recentTransactions.map((transaction) => (
+                            <div
+                              key={transaction.id}
+                              className="flex items-center justify-between p-2 bg-muted/30 rounded-lg text-xs"
+                            >
+                              <div className="flex items-center gap-2">
+                                {transaction.amount > 0 ? (
+                                  <ArrowUpRight className="w-3 h-3 text-emerald-600" />
+                                ) : (
+                                  <ArrowDownLeft className="w-3 h-3 text-orange-600" />
+                                )}
+                                <span className="font-medium truncate max-w-20">
+                                  {COIN_TRANSACTION_LABELS[transaction.type]}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className={`font-bold ${
+                                  transaction.amount > 0 ? 'text-emerald-600' : 'text-orange-600'
+                                }`}>
+                                  {transaction.amount > 0 ? '+' : ''}{transaction.amount}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {formatTransactionDate(transaction.createdAt)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Coins className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">Loading coin balance...</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

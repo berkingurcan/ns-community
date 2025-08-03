@@ -108,7 +108,7 @@ export function ProjectCard({
       <div className="relative z-10 flex flex-col h-full">
         
         {/* Header Section */}
-        <div className="relative p-6 pb-4">
+        <div className="relative px-4 pt-3 pb-2">
 
 
           {/* Project Header */}
@@ -127,14 +127,7 @@ export function ProjectCard({
                 </div>
               )}
               
-              {/* Status Indicator */}
-              <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-background flex items-center justify-center ${
-                project.status === 'active' ? 'bg-emerald-500' :
-                project.status === 'in-development' ? 'bg-blue-500' :
-                project.status === 'completed' ? 'bg-gray-500' : 'bg-orange-500'
-              }`}>
-                <div className="w-2 h-2 bg-white rounded-full" />
-              </div>
+
             </div>
 
             {/* Project Info */}
@@ -189,7 +182,7 @@ export function ProjectCard({
                   variant="ghost"
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Edit
+                  Quick
                 </Button>
               </div>
             )}
@@ -197,7 +190,7 @@ export function ProjectCard({
         </div>
 
         {/* Main Content */}
-        <div className="px-6 space-y-5 flex-grow">
+        <div className="px-4 pb-2 space-y-4 flex-grow">
           {/* Project Description */}
           <div className="space-y-3">
             <p className="text-muted-foreground leading-relaxed text-sm line-clamp-2 group-hover:text-foreground/80 transition-colors">
@@ -232,18 +225,20 @@ export function ProjectCard({
                 )}
               </div>
               
-              {/* Collaboration Note - Always show if collaboration is open */}
-              {hasDiscordRole && project.collaboration_status === 'open' && (
-                <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <StickyNote className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">Note for Collaborators</div>
-                      <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                        {project.notes_for_requests || "No specific requirements. Feel free to reach out!"}
-                      </p>
+              {/* Collaboration Note - Small icon with hover tooltip */}
+              {hasDiscordRole && project.collaboration_status === 'open' && project.notes_for_requests && (
+                <div className="flex items-center gap-2">
+                  <div className="group relative">
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full cursor-help">
+                      <StickyNote className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-xs z-50">
+                      <div className="font-medium mb-1">Note for Collaborators</div>
+                      <div className="leading-relaxed">{project.notes_for_requests}</div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
                     </div>
                   </div>
+                  <span className="text-xs text-muted-foreground">Collaboration Notes</span>
                 </div>
               )}
             </div>
@@ -277,7 +272,7 @@ export function ProjectCard({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-muted/30 bg-muted/10">
+        <div className="px-4 py-3 border-t border-muted/30 bg-muted/10">
           <div className="flex items-center justify-between">
             {/* Social Links */}
             <div className="flex items-center gap-1">
