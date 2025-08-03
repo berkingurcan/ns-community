@@ -65,7 +65,7 @@ export function CollaborationRequestModal({
       
       toast.success('Collaboration request sent! The founder will review it soon.');
       handleClose();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to send collaboration request. Please try again.');
       console.error('Collaboration request error:', error);
     } finally {
@@ -189,7 +189,7 @@ export function CollaborationRequestModal({
                 id="intro"
                 value={introMessage}
                 onChange={(e) => setIntroMessage(e.target.value)}
-                placeholder="Hi! I'm a Frontend Developer with 3+ years of React experience. I'd love to help build your UI and contribute to the project's success. Available 10+ hours/week."
+                placeholder="Hi! I&#39;m a Frontend Developer with 3+ years of React experience. I&#39;d love to help build your UI and contribute to the project&#39;s success. Available 10+ hours/week."
                 className="w-full h-24 px-3 py-2 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 maxLength={maxLength}
               />

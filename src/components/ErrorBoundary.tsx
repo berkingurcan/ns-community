@@ -121,7 +121,7 @@ export const useWalletErrorSuppression = () => {
         console.warn('🔇 Console error suppressed:', message);
         return;
       }
-      originalConsoleError.apply(console, args);
+      originalConsoleError.apply(console, args as any[]);
     };
 
     window.addEventListener('error', handleError, true);

@@ -363,7 +363,7 @@ export function OpportunityCard({ project, currentUserId, timeAgo, onApply, onCa
                 <textarea
                   value={applyMessage}
                   onChange={(e) => setApplyMessage(e.target.value.slice(0, 140))}
-                  placeholder="Hi! I'm interested in collaborating on your project. I have experience in..."
+                  placeholder="Hi! I&#39;m interested in collaborating on your project. I have experience in..."
                   className="w-full h-24 px-3 py-2 text-sm border border-input rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   maxLength={140}
                 />

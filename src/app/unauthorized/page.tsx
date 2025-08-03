@@ -20,7 +20,7 @@ const UnauthorizedPage = () => {
                     Access Restricted
                 </h1>
                 <p className="mt-2 text-secondary-foreground">
-                    Your Discord account doesn&apos;t have the required permissions to access NSphere. 
+                    Your Discord account doesn&#39;t have the required permissions to access NSphere. 
                     Please contact an administrator or try logging in with a different account.
                 </p>
                 <div className="flex flex-col gap-3">

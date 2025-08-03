@@ -164,7 +164,7 @@ export function QuickEditModal({
   };
 
   const getCategoryIcon = (categoryId: ProjectCategory) => {
-    const iconMap: Record<ProjectCategory, React.ComponentType> = {
+    const iconMap: Record<ProjectCategory, React.ComponentType<{}> | undefined> = {
       'web3-dapp': Globe,
       'defi': DollarSign,
       'nft': Image,
@@ -188,7 +188,7 @@ export function QuickEditModal({
   };
 
   const getCollaborationIcon = (typeId: CollaborationType) => {
-    const iconMap: Record<CollaborationType, React.ComponentType> = {
+    const iconMap: Record<CollaborationType, React.ComponentType<{}> | undefined> = {
       'frontend-dev': Monitor,
       'backend-dev': Server,
       'blockchain-dev': Blocks,

@@ -221,7 +221,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
                             name="status"
                             value={status}
                             checked={formData.status === status}
-                            onChange={(e) => handleInputChange('status', e.target.value as 'open' | 'in-progress' | 'completed')}
+                            onChange={(e) => handleInputChange('status', e.target.value as Project['status'])}
                         />
                         {status}
                     </Label>

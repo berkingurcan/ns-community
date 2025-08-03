@@ -140,7 +140,7 @@ export function CollaborationRequestsModal({
         }
       ];
       setRequests(mockRequests);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading collaboration requests:', error);
     } finally {
       setLoading(false);
@@ -189,7 +189,7 @@ export function CollaborationRequestsModal({
       // Show success message - Continental style
       alert(`🏛️ CONTINENTAL TRANSACTION COMPLETE!\n\n1 Continental Coin has been transferred to ${request.applicantName}.\n\n"Honor demands payment. The service is rendered, the coin is earned." - The Continental`);
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error accepting request:', error);
       alert('Failed to accept collaboration request. Please try again.');
     }
@@ -207,7 +207,7 @@ export function CollaborationRequestsModal({
             : req
         )
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error rejecting request:', error);
     }
   };
@@ -401,7 +401,7 @@ export function CollaborationRequestsModal({
               </div>
               <h3 className="text-lg font-semibold mb-2">No collaboration requests</h3>
               <p className="text-muted-foreground text-sm">
-                When people apply to collaborate on your projects, they&apos;ll appear here.
+                When people apply to collaborate on your projects, they&#39;ll appear here.
               </p>
             </div>
           )}

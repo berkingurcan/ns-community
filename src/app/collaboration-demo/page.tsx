@@ -104,7 +104,6 @@ const createMockProjects = (userId: string): Project[] => [
     categories: ['bridge'] as ProjectCategory[],
     collaboration_status: 'not-open',
     looking_for_collaboration: [],
-    // collaboration_description: '',
     max_collaborators: 4,
     current_collaborators: 4,
     created_at: '2024-01-08T16:45:00Z',
@@ -124,7 +123,6 @@ const createMockProjects = (userId: string): Project[] => [
     categories: ['ai'] as ProjectCategory[],
     collaboration_status: 'open',
     looking_for_collaboration: ['ai-ml', 'backend-dev', 'devops'],
-    // collaboration_description: 'Looking for ML engineers and backend developers to optimize our trading algorithms.',
     max_collaborators: 3,
     current_collaborators: 1,
     created_at: '2024-01-05T11:20:00Z',
@@ -178,7 +176,7 @@ const CollaborationDemoPage = () => {
       setCollaborationRequests(prev => [mockRequest, ...prev]);
       toast.success('Collaboration request sent! 🎉');
       
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to send collaboration request');
       console.error('Request error:', error);
     }
@@ -197,8 +195,9 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Collaboration request accepted! 🤝');
-    } catch {
+    } catch (error: unknown) {
       toast.error('Failed to accept request');
+      console.error('Accept request error:', error);
     }
   };
 
@@ -215,8 +214,9 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Request declined');
-    } catch {
+    } catch (error: unknown) {
       toast.error('Failed to decline request');
+      console.error('Deny request error:', error);
     }
   };
 
@@ -229,8 +229,9 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Request archived');
-    } catch {
+    } catch (error: unknown) {
       toast.error('Failed to archive request');
+      console.error('Archive request error:', error);
     }
   };
 
@@ -249,7 +250,7 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Project updated successfully! ✨');
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to update project');
       console.error('Quick edit error:', error);
     }
@@ -344,9 +345,9 @@ const CollaborationDemoPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><strong>1.</strong> <span className="text-purple-600 font-medium">Hover over your own projects</span> to see the &quot;Quick Edit&quot; button appear</p>
+            <p><strong>1.</strong> <span className="text-purple-600 font-medium">Hover over your own projects</span> to see the &#34;Quick Edit&#34; button appear</p>
             <p><strong>2.</strong> <span className="text-purple-600 font-medium">Quick Edit</span> your collaboration status, categories, and team settings instantly</p>
-            <p><strong>3.</strong> Click &quot;Request to Join&quot; on other projects to send collaboration requests</p>
+            <p><strong>3.</strong> Click &#34;Request to Join&#34; on other projects to send collaboration requests</p>
             <p><strong>4.</strong> Fill out the collaboration request modal with a 140-character intro</p>
             <p><strong>5.</strong> Click the notification bell (right side) to manage incoming requests</p>
             <p><strong>6.</strong> Accept, decline, or archive requests and watch real-time updates</p>

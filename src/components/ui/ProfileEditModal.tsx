@@ -61,7 +61,7 @@ export function ProfileEditModal({
 
     setIsSyncing(true);
     try {
-      const discordProfile = extractProfileFromDiscord(session.user as unknown as { user_metadata?: Record<string, unknown>; identities?: Array<Record<string, unknown>>; email?: string });
+      const discordProfile = extractProfileFromDiscord(session.user);
       
       setFormData(prev => ({
         ...prev,

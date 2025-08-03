@@ -41,12 +41,12 @@ export default function ProfilePage() {
     try {
       const projects = await ProjectService.getUserProjects(userProfile.id);
       setUserProjects(projects);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading user projects:', error);
     } finally {
       setProjectsLoading(false);
     }
-  }, [userProfile]);
+  }, [userProfile?.id]);
 
   // Load recent coin transactions
   const loadRecentTransactions = useCallback(async () => {
@@ -55,10 +55,11 @@ export default function ProfilePage() {
     try {
       const transactions = await CoinService.getUserTransactions(userProfile.id);
       setRecentTransactions(transactions.slice(0, 5)); // Show last 5 transactions
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading recent transactions:', error);
+    } finally {
     }
-  }, [userProfile]);
+  }, [userProfile?.id]);
 
   // Load projects and transactions when userProfile is available
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function ProfilePage() {
             : project
         )
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Quick edit error:', error);
       toast.error('Failed to update project');
     }
@@ -126,7 +127,7 @@ export default function ProfilePage() {
       );
       
       setEditingProject(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Full edit error:', error);
       toast.error('Failed to update project');
     } finally {
@@ -148,7 +149,7 @@ export default function ProfilePage() {
       );
       
       setEditingProject(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Delete error:', error);
       toast.error('Failed to delete project');
     } finally {
@@ -257,7 +258,7 @@ export default function ProfilePage() {
                   {session?.user ? (
                     <Image
                       src={session.user?.user_metadata?.avatar_url || '/placeholder-avatar.png'}
-                      alt={`${userProfile.username}&apos;s profile`}
+                      alt={`${userProfile.username}'s profile`}
                       width={128}
                       height={128}
                       className="w-32 h-32 rounded-full shadow-xl border-4 border-background object-cover"

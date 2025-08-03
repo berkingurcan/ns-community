@@ -35,7 +35,7 @@ export function OnboardingReminder({ username }: OnboardingReminderProps) {
             Welcome{username ? `, ${username}` : ''}! Complete your profile
           </h3>
           <p className="text-sm text-muted-foreground mb-3">
-            You&apos;re almost there! Complete your onboarding to unlock all features and connect with the community.
+            You&#39;re almost there! Complete your onboarding to unlock all features and connect with the community.
           </p>
           
           <div className="flex gap-2">

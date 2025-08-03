@@ -153,7 +153,7 @@ export function CollaborationSidebar({
                 <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
                 <h3 className="font-medium mb-2">No collaboration requests</h3>
                 <p className="text-sm text-muted-foreground">
-                  When people request to collaborate on your projects, they&apos;ll appear here.
+                  When people request to collaborate on your projects, they&#39;ll appear here.
                 </p>
               </div>
             ) : (
@@ -222,7 +222,7 @@ interface RequestCardProps {
   onAccept?: () => void;
   onDeny?: () => void;
   onArchive?: () => void;
-  getCollaborationType: (typeId: CollaborationType) => { label: string; icon: React.ComponentType } | undefined;
+  getCollaborationType: (typeId: CollaborationType) => { label: string; icon: React.ReactNode } | undefined;
   isAccepted?: boolean;
 }
 
@@ -269,7 +269,7 @@ function RequestCard({
 
       {/* Message */}
       <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-        &quot;{request.intro_message}&quot;
+        &#34;{request.intro_message}&#34;
       </p>
 
       {/* Discord Info */}
