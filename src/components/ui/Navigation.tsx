@@ -1,21 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Button } from '@/components/ui/Button';
 
+// Client-only wrapper to prevent hydration issues
+function ClientOnlyWalletButton({ className }: { className?: string }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <button 
+        className={className}
+        disabled
+      >
+        Select Wallet
+      </button>
+    );
+  }
+
+  return <WalletMultiButton className={className} />;
+}
+
 export function Navigation() {
-  const { session, hasProfile, userProfile, login, logout } = useAuth();
+  const { session, hasProfile, login, logout } = useAuth();
   const { publicKey, connected, disconnect } = useWallet();
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [showNFTPopup, setShowNFTPopup] = useState(false);
   const [nftError, setNftError] = useState('');
 
-  const isAuthenticated = session && hasProfile !== null;
   const isNewUser = connected && session && hasProfile === false;
   const isExistingUser = connected && session && hasProfile === true;
 
@@ -140,7 +161,7 @@ export function Navigation() {
               {/* Wallet Connection */}
               <div className="flex items-center space-x-3">
                 {!connected && (
-                  <WalletMultiButton className="!bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-500 hover:!to-blue-500 !text-white !font-medium !rounded-xl !transition-all !duration-300 !px-6 !py-2" />
+                  <ClientOnlyWalletButton className="!bg-gradient-to-r !from-purple-600 !to-blue-600 hover:!from-purple-500 hover:!to-blue-500 !text-white !font-medium !rounded-xl !transition-all !duration-300 !px-6 !py-2" />
                 )}
 
                 {connected && !session && (

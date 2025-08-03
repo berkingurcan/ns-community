@@ -11,7 +11,7 @@ export class ImageUploadService {
   private static readonly ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
   // Diagnostic function to check storage setup with timeout
-  static async checkStorageSetup(): Promise<{ isSetup: boolean; error?: string; session?: any }> {
+  static async checkStorageSetup(): Promise<{ isSetup: boolean; error?: string; session?: unknown }> {
     const setupTimeout = 10000; // 10 seconds timeout
     
     try {
@@ -21,8 +21,8 @@ export class ImageUploadService {
       );
 
       return await Promise.race([setupPromise, timeoutPromise]);
-    } catch (error: any) {
-      if (error.message.includes('timeout')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('timeout')) {
         return { 
           isSetup: false, 
           error: 'Storage check timed out. Please check your connection.' 
@@ -30,13 +30,13 @@ export class ImageUploadService {
       }
       return { 
         isSetup: false, 
-        error: `Storage check failed: ${error.message}` 
+        error: `Storage check failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
       };
     }
   }
 
   // Internal storage check method
-  private static async performStorageCheck(): Promise<{ isSetup: boolean; error?: string; session?: any }> {
+  private static async performStorageCheck(): Promise<{ isSetup: boolean; error?: string; session?: unknown }> {
     try {
       // Check authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -50,7 +50,7 @@ export class ImageUploadService {
       }
 
       // Try to list files in the bucket (this will test bucket access)
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(this.BUCKET_NAME)
         .list('', { limit: 1 });
 
@@ -66,10 +66,10 @@ export class ImageUploadService {
         isSetup: true, 
         session: session.user 
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return { 
         isSetup: false, 
-        error: `Unexpected error: ${error.message}` 
+        error: `Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}` 
       };
     }
   }

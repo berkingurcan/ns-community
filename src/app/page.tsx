@@ -11,7 +11,7 @@ import { Project, EXPERTISE_OPTIONS } from '@/types/project';
 
 export default function HomePage() {
   const { session, hasProfile, userProfile } = useAuth();
-  const { publicKey, connected } = useWallet();
+  const { connected } = useWallet();
   const router = useRouter();
   
   // States for projects and pagination
