@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, COLLABORATION_STATUS, CreateCollaborationRequestData } from '@/types/project';
 import { Button } from '@/components/ui/Button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import { QuickEditModal } from '@/components/ui/QuickEditModal';
 import {
   Tag,
   Link2,
@@ -20,7 +22,10 @@ import {
   Twitter,
   ExternalLink,
   Users,
-  UserPlus
+  UserPlus,
+  Settings,
+  Zap,
+  StickyNote
 } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -28,9 +33,12 @@ interface ProjectCardProps {
   onEdit?: (project: Project) => void;
   onDelete?: (projectId: string) => void;
   onRequestCollaboration?: (data: CreateCollaborationRequestData) => Promise<void>;
+  onQuickEdit?: (projectId: string, updates: Partial<Project>) => Promise<void>;
+  onEditMore?: () => void;
   canEdit?: boolean;
   canRequestCollaboration?: boolean;
   currentUserId?: string;
+  hasDiscordRole?: boolean; // For showing collaboration badges
 }
 
 import { VariantProps } from 'class-variance-authority';
@@ -49,10 +57,14 @@ export function ProjectCard({
   onEdit, 
   onDelete, 
   onRequestCollaboration,
+  onQuickEdit,
+  onEditMore,
   canEdit = false,
   canRequestCollaboration = false,
-  currentUserId
+  currentUserId,
+  hasDiscordRole = false
 }: ProjectCardProps) {
+  const [showQuickEdit, setShowQuickEdit] = useState(false);
   const getHost = (url: string | undefined | null) => {
     if (!url) return '';
     try {
@@ -78,16 +90,35 @@ export function ProjectCard({
   };
 
   const isOwnProject = currentUserId === project.user_id;
-  const spotsLeft = project.max_collaborators - project.current_collaborators;
-  const isCollaborationOpen = project.collaboration_status === 'open' || project.collaboration_status === 'selective';
-  const canShowCollaborationButton = !isOwnProject && canRequestCollaboration && isCollaborationOpen && spotsLeft > 0;
+  const isCollaborationOpen = project.collaboration_status === 'open';
+  const canShowCollaborationButton = !isOwnProject && canRequestCollaboration && isCollaborationOpen;
 
   const category = getProjectCategory();
   const collaborationStatus = getCollaborationStatus();
   const lookingForTypes = getCollaborationTypes();
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
+    <Card className="hover:shadow-xl transition-all duration-300 group flex flex-col h-full relative overflow-hidden">
+      {/* Collaboration Badge - Only visible for Discord role holders */}
+      {hasDiscordRole && project.collaboration_status === 'open' && (
+        <div className="absolute top-3 right-3 z-10">
+          <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700 rounded-full text-xs">
+            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-green-700 dark:text-green-400 font-medium">Open</span>
+            {project.notes_for_requests && (
+              <div className="relative group">
+                <StickyNote className="w-3 h-3 text-green-600 cursor-help" />
+                <div className="absolute top-full right-0 mt-2 w-48 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {project.notes_for_requests}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
       <CardHeader className="pb-4">
         {/* Project Image and Title */}
         <div className="flex items-start gap-4">
@@ -103,7 +134,7 @@ export function ProjectCard({
             </div>
           )}
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
+            <h3 className="text-xl font-bold text-foreground group-hover:text-primary dark:group-hover:text-primary transition-colors duration-300">
               {project.title}
             </h3>
             <div className="flex items-center flex-wrap gap-2 mt-2">
@@ -132,18 +163,28 @@ export function ProjectCard({
                   {collaborationStatus.emoji} {collaborationStatus.label}
                 </Badge>
               )}
-              
-              {/* Team Size Info */}
-              {isCollaborationOpen && (
-                <Badge variant="outline" className="text-xs">
-                  <Users className="w-3 h-3 mr-1" />
-                  {spotsLeft}/{project.max_collaborators} spots
-                </Badge>
-              )}
+
             </div>
           </div>
         </div>
       </CardHeader>
+
+      {/* Quick Edit Button - Floating on Hover */}
+      {canEdit && onQuickEdit && (
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowQuickEdit(true);
+            }}
+            className="shadow-lg backdrop-blur-sm"
+          >
+            <Zap className="w-4 h-4 mr-1" />
+            Quick Edit
+          </Button>
+        </div>
+      )}
 
       <CardContent className="space-y-4 flex-grow">
 
@@ -154,13 +195,40 @@ export function ProjectCard({
           </p>
         </div>
 
+        {/* Collaboration Info */}
+        {lookingForTypes.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
+              <UserPlus className="w-4 h-4 mr-1 text-green-500" />
+              Looking for Help
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {lookingForTypes.slice(0, 3).map((type) => (
+                <Badge
+                  key={type.id}
+                  variant="outline"
+                  className="text-sm font-medium border-green-200 text-green-800 dark:border-green-700 dark:text-green-400"
+                >
+                  {type.emoji} {type.label}
+                </Badge>
+              ))}
+              {lookingForTypes.length > 3 && (
+                <Badge variant="outline" className="text-muted-foreground">
+                  +{lookingForTypes.length - 3} more
+                </Badge>
+              )}
+            </div>
+            {project.collaboration_description && (
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                "{project.collaboration_description}"
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Tags */}
         {project.tags && project.tags.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
-              <Tag className="w-4 h-4 mr-1 text-muted-foreground" />
-              Tags
-            </h4>
             <div className="flex flex-wrap gap-2">
               {project.tags.slice(0, 5).map((tag, index) => (
                 <Badge
@@ -180,27 +248,52 @@ export function ProjectCard({
           </div>
         )}
 
-        {/* Links */}
-        {(project.github_url || project.live_url || project.twitter_url) && (
+        {/* Project Links */}
+        {(project.github_url || project.live_url || project.twitter_url || project.website_url) && (
            <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center">
-                <Link2 className="w-4 h-4 mr-1 text-blue-500" />
-                Links
-            </h4>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
+            <div className="flex gap-2">
                 {project.github_url && (
-                    <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        <Github className="w-3 h-3" /> GitHub
+                    <a 
+                      href={project.github_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title={project.github_url}
+                    >
+                        <Github className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-100" />
                     </a>
                 )}
                 {project.twitter_url && (
-                    <a href={project.twitter_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        <Twitter className="w-3 h-3" /> Twitter/X
+                    <a 
+                      href={project.twitter_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative p-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 rounded-lg transition-colors"
+                      title={project.twitter_url}
+                    >
+                        <Twitter className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300" />
+                    </a>
+                )}
+                {project.website_url && (
+                    <a 
+                      href={project.website_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative p-2 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-800/40 rounded-lg transition-colors"
+                      title={project.website_url}
+                    >
+                        <ExternalLink className="w-4 h-4 text-green-600 dark:text-green-400 group-hover:text-green-700 dark:group-hover:text-green-300" />
                     </a>
                 )}
                 {project.live_url && (
-                    <a href={project.live_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        <ExternalLink className="w-3 h-3" /> {getHost(project.live_url)}
+                    <a 
+                      href={project.live_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="group relative p-2 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 rounded-lg transition-colors"
+                      title={project.live_url}
+                    >
+                        <ExternalLink className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300" />
                     </a>
                 )}
             </div>
@@ -209,31 +302,65 @@ export function ProjectCard({
       </CardContent>
 
       {/* Action Buttons */}
-      {canEdit && (
+      {(canEdit || canShowCollaborationButton) && (
         <CardFooter className="flex gap-2 pt-4 mt-auto">
-          {onEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(project)}
-              className="flex-1 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
+          {/* Owner Actions */}
+          {canEdit && (
+            <>
+              {onEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(project)}
+                  className="flex-1"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => onDelete(project.id)}
+                  className="flex-1"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </Button>
+              )}
+            </>
           )}
-          {onDelete && (
+          
+          {/* Collaboration Request Button */}
+          {canShowCollaborationButton && onRequestCollaboration && (
             <Button
-              variant="destructive"
               size="sm"
-              onClick={() => onDelete(project.id)}
-              className="flex-1"
+              onClick={() => {
+                // Open collaboration modal
+                // This will be handled by parent component
+                // For now, we'll use a simple approach
+                console.log('Request collaboration for project:', project.id);
+              }}
+              className="flex-1 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+              variant="outline"
             >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Delete
+              <UserPlus className="w-4 h-4 mr-1" />
+              Request to Join
             </Button>
           )}
         </CardFooter>
+      )}
+
+      {/* Quick Edit Modal */}
+      {showQuickEdit && onQuickEdit && (
+        <QuickEditModal
+          project={project}
+          isOpen={showQuickEdit}
+          onClose={() => setShowQuickEdit(false)}
+          onSave={onQuickEdit}
+          onEditMore={onEditMore}
+        />
       )}
     </Card>
   );

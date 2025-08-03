@@ -7,6 +7,7 @@ import { Project } from '@/types/project';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function MyProjectsPage() {
   const { userProfile } = useAuth();
@@ -14,22 +15,47 @@ export default function MyProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const fetchProjects = async () => {
+    if (!userProfile) return;
+    
+    setIsLoading(true);
+    try {
+      const userProjects = await ProjectService.getProjectsByFounder(userProfile.id);
+      setProjects(userProjects);
+    } catch (error) {
+      console.error('Error fetching user projects:', error);
+      toast.error('Failed to load projects');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (userProfile) {
-      const fetchProjects = async () => {
-        setIsLoading(true);
-        try {
-          const userProjects = await ProjectService.getProjectsByFounder(userProfile.id);
-          setProjects(userProjects);
-        } catch (error) {
-          console.error('Error fetching user projects:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       fetchProjects();
     }
   }, [userProfile]);
+
+  const handleQuickEdit = async (projectId: string, updates: Partial<Project>) => {
+    if (!userProfile) return;
+    
+    try {
+      await ProjectService.quickUpdateProject(projectId, updates, userProfile.id);
+      toast.success('Project updated successfully! ✨');
+      
+      // Update the project in local state for immediate UI feedback
+      setProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === projectId 
+            ? { ...project, ...updates }
+            : project
+        )
+      );
+    } catch (error) {
+      console.error('Quick edit error:', error);
+      toast.error('Failed to update project');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -70,7 +96,13 @@ export default function MyProjectsPage() {
       ) : (
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard 
+              key={project.id} 
+              project={project}
+              canEdit={true}
+              currentUserId={userProfile?.id}
+              onQuickEdit={handleQuickEdit}
+            />
           ))}
         </div>
       )}

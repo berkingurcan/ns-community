@@ -10,5 +10,11 @@
   },
   "typescript.validate.enable": false,
   "deno.lint": true,
-  "deno.unstable": []
+  "deno.unstable": [],
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "scss.validate": true,
+  "scss.lint.unknownAtRules": "ignore",
+  "less.validate": true,
+  "less.lint.unknownAtRules": "ignore"
 }

@@ -113,7 +113,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { extractProfileFromDiscord } = await import('@/types/profile');
       const discordProfile = extractProfileFromDiscord(user);
       
-      const { data, error } = await supabase
+      // Add timeout to profile creation
+      const insertQuery = supabase
         .from('user_profiles')
         .insert({
           id: user.id,
@@ -127,14 +128,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         })
         .select()
         .single();
+        
+      const insertTimeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile creation timeout')), 5000)
+      );
+      
+      const { data, error } = await Promise.race([insertQuery, insertTimeout]) as any;
 
       if (error) {
-        console.error('❌ Error creating initial profile:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.details);
-        console.error('Error hint:', error.hint);
+        if (error.message === 'Profile creation timeout') {
+          console.warn('⚠️ Profile creation timed out');
+        } else {
+          console.error('❌ Error creating initial profile:', error.message || error);
+        }
         return null;
       }
 
@@ -160,26 +166,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Fetching profile from database...');
       
-      const { data, error } = await supabase
+      // Add timeout to database query
+      const profileQuery = supabase
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+        
+      const queryTimeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      );
+      
+      const { data, error } = await Promise.race([profileQuery, queryTimeout]) as any;
 
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.message === 'Database query timeout') {
+          console.warn('⚠️ Profile fetch timed out');
+          setUserProfile(null);
+        } else if (error.code === 'PGRST116') {
           console.log('📝 No profile found - creating initial profile...');
           const newProfile = await createInitialProfile(user);
           setUserProfile(newProfile);
         } else {
-          console.error('❌ Profile fetch error:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
+          console.error('❌ Profile fetch error:', error.message || error);
           setUserProfile(null);
         }
       } else {
         console.log('✅ Profile found:', data);
-        console.log('Profile status:', data.status);
-        console.log('Profile data:', JSON.stringify(data, null, 2));
         setUserProfile(data);
       }
     } catch (e) {
@@ -213,35 +226,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (currentUser) {
           console.log('Fetching profile for authenticated user...');
+          
+          // Set loading to false first, then fetch profile in background
+          setLoading(false);
+          
+          // Profile fetch with shorter timeout
           try {
-            await Promise.race([
-              fetchUserProfile(currentUser),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), 8000))
-            ]);
+            const profilePromise = fetchUserProfile(currentUser);
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+            );
+            
+            await Promise.race([profilePromise, timeoutPromise]);
+            console.log('✅ Profile fetched successfully');
           } catch (e) {
-            console.error('Profile fetch failed:', e);
-            // Continue anyway, don't block the app
+            console.warn('⚠️ Profile fetch failed or timed out:', e.message);
+            // Try one more time with longer timeout in background
+            setTimeout(async () => {
+              try {
+                await fetchUserProfile(currentUser);
+                console.log('✅ Profile fetched on retry');
+              } catch (retryError) {
+                console.warn('⚠️ Profile retry also failed:', retryError.message);
+              }
+            }, 1000);
           }
           
+          // Role authorization with shorter timeout
           try {
-            await Promise.race([
-              checkRoleAuthorization(currentUser),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Role check timeout')), 5000))
-            ]);
+            const rolePromise = checkRoleAuthorization(currentUser);
+            const roleTimeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Role check timeout')), 2000)
+            );
+            
+            await Promise.race([rolePromise, roleTimeoutPromise]);
+            console.log('✅ Role authorization completed');
           } catch (e) {
-            console.error('Role authorization failed:', e);
-            // Set authorized to true as fallback
+            console.warn('⚠️ Role authorization failed or timed out:', e.message);
+            // Fallback to authorized
             setIsAuthorized(true);
           }
         } else {
           console.log('No user, setting profile to null');
           setUserProfile(null);
           setIsAuthorized(null);
+          setLoading(false);
         }
       } catch (e) {
         console.error('Error in manageSession:', e);
-      } finally {
         setLoading(false);
+      } finally {
         isProcessing = false;
         console.log('=== MANAGE SESSION END ===');
       }
@@ -255,21 +289,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           try {
             const connectivityTest = supabase.from('user_profiles').select('count', { count: 'exact', head: true });
             const connectivityTimeout = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Connectivity test timeout')), 5000);
+              setTimeout(() => reject(new Error('Connectivity test timeout')), 2000);
             });
             
             await Promise.race([connectivityTest, connectivityTimeout]);
             console.log('✅ Supabase connectivity OK');
           } catch (connectivityError) {
-            console.error('❌ Supabase connectivity failed:', connectivityError);
-            // Continue anyway, but with reduced timeout
+            console.warn('⚠️ Supabase connectivity test failed:', connectivityError.message);
+            // Continue anyway - connectivity might be slow but working
           }
           
           // Now try to get session with timeout
           console.log('Fetching auth session...');
           const sessionPromise = supabase.auth.getSession();
           const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Session fetch timeout')), 8000);
+            setTimeout(() => reject(new Error('Session fetch timeout')), 4000);
           });
           
           const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
@@ -290,8 +324,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log('=== GET INITIAL SESSION END ===');
     };
 
-    // Longer delay to let wallet extensions settle completely
-    setTimeout(getInitialSession, 1000);
+    // Short delay to let components settle
+    setTimeout(getInitialSession, 300);
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {

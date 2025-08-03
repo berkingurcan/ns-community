@@ -15,7 +15,17 @@ export class ProjectService {
       throw error;
     }
 
-    return data || [];
+    // Ensure all projects have default collaboration values
+    const projectsWithDefaults = (data || []).map(project => ({
+      ...project,
+      category: project.category || 'other',
+      collaboration_status: project.collaboration_status || 'not-looking',
+      looking_for_collaboration: project.looking_for_collaboration || [],
+      max_collaborators: project.max_collaborators || 5,
+      current_collaborators: project.current_collaborators || 0
+    }));
+
+    return projectsWithDefaults;
   }
 
   // Get all projects (for browsing)
@@ -163,6 +173,44 @@ export class ProjectService {
     return data;
   }
 
+  // Quick update project (for collaboration settings, status, etc.)
+  static async quickUpdateProject(
+    projectId: string, 
+    updates: Partial<Project>,
+    userId: string
+  ): Promise<Project> {
+    // Filter out read-only fields
+    const allowedUpdates = {
+      status: updates.status,
+      collaboration_status: updates.collaboration_status,
+      looking_for_collaboration: updates.looking_for_collaboration,
+      collaboration_description: updates.collaboration_description,
+      category: updates.category,
+      max_collaborators: updates.max_collaborators,
+      updated_at: new Date().toISOString()
+    };
+
+    // Remove undefined values
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(allowedUpdates).filter(([, value]) => value !== undefined)
+    );
+
+    const { data, error } = await supabase
+      .from('projects')
+      .update(cleanUpdates)
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error quick updating project:', error);
+      throw error;
+    }
+
+    return data;
+  }
+
   // Delete a project
   static async deleteProject(id: string, userId: string): Promise<void> {
     const { error } = await supabase
@@ -222,6 +270,16 @@ export class ProjectService {
       throw error;
     }
 
-    return data || [];
+    // Ensure all projects have default collaboration values
+    const projectsWithDefaults = (data || []).map(project => ({
+      ...project,
+      category: project.category || 'other',
+      collaboration_status: project.collaboration_status || 'not-looking',
+      looking_for_collaboration: project.looking_for_collaboration || [],
+      max_collaborators: project.max_collaborators || 5,
+      current_collaborators: project.current_collaborators || 0
+    }));
+
+    return projectsWithDefaults;
   }
 }

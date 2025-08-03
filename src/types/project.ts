@@ -7,12 +7,13 @@ export interface Project {
   github_url?: string;
   live_url?: string;
   twitter_url?: string;
+  website_url?: string;
   tags: string[];
   status: 'showcase' | 'NS-Only' | 'Archive' | 'Draft';
-  category: ProjectCategory;
+  categories: ProjectCategory[];
   collaboration_status: CollaborationStatus;
   looking_for_collaboration: CollaborationType[];
-  collaboration_description?: string;
+  notes_for_requests?: string;
   max_collaborators: number;
   current_collaborators: number;
   created_at: string;
@@ -26,12 +27,13 @@ export interface CreateProjectData {
   github_url?: string;
   live_url?: string;
   twitter_url?: string;
+  website_url?: string;
   tags: string[];
   status: 'showcase' | 'NS-Only' | 'Archive' | 'Draft';
-  category: ProjectCategory;
+  categories: ProjectCategory[];
   collaboration_status: CollaborationStatus;
   looking_for_collaboration: CollaborationType[];
-  collaboration_description?: string;
+  notes_for_requests?: string;
   max_collaborators: number;
 }
 
@@ -121,10 +123,8 @@ export type CollaborationType = typeof COLLABORATION_TYPES[number]['id'];
 
 // Collaboration Status
 export const COLLABORATION_STATUS = [
-  { id: 'not-looking', label: 'Not Looking', emoji: '🔒', color: 'gray' },
-  { id: 'open', label: 'Open for Collaboration', emoji: '🤝', color: 'green' },
-  { id: 'selective', label: 'Selective Collaboration', emoji: '👀', color: 'yellow' },
-  { id: 'team-full', label: 'Team Complete', emoji: '✅', color: 'blue' }
+  { id: 'not-open', label: 'Not Open for Collaboration', emoji: '🔒', color: 'gray' },
+  { id: 'open', label: 'Open for Collaboration', emoji: '🤝', color: 'green' }
 ] as const;
 
 export type CollaborationStatus = typeof COLLABORATION_STATUS[number]['id'];
@@ -200,5 +200,11 @@ export interface QuickEditData {
   status: Project['status'];
   collaboration_status: CollaborationStatus;
   looking_for_collaboration: CollaborationType[];
-  category: ProjectCategory;
+  categories: ProjectCategory[];
 }
+
+// Popular Categories for Quick Edit
+export const POPULAR_CATEGORIES = [
+  'web3-dapp', 'defi', 'nft', 'gaming', 'dao', 'blockchain', 
+  'developer-tools', 'wallet', 'ai', 'saas', 'mobile'
+] as const;

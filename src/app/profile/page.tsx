@@ -7,28 +7,24 @@ import { supabase } from '@/lib/supabaseClient';
 import { ProjectService } from '@/lib/projects';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
+import { ProjectForm } from '@/components/ui/ProjectForm';
+import { ProfileEditModal } from '@/components/ui/ProfileEditModal';
 import { Briefcase, Edit, Save, X, Loader2, RefreshCw, Download, User, Github, Twitter, Zap, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { ProfileFormData, EXPERTISE_OPTIONS, validateProfileForm, extractProfileFromDiscord } from '@/types/profile';
-import { Project } from '@/types/project';
+import { Project, UpdateProjectData } from '@/types/project';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
-  const { session, userProfile, refreshProfile } = useAuth();
+  const { session, userProfile, refreshProfile, loading } = useAuth();
   const router = useRouter();
-  const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<ProfileFormData>({
-    username: '',
-    discordId: '',
-    shillYourself: '',
-    expertises: [],
-    github: '',
-    xHandle: ''
-  });
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
 
   // Projects carousel state
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [currentProjectPage, setCurrentProjectPage] = useState(0);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const projectsPerPage = 3;
 
   // Load user projects
@@ -59,28 +55,87 @@ export default function ProfilePage() {
       return;
     }
 
-    if (userProfile) {
-      console.log('Setting form data from userProfile:', userProfile);
-      setFormData({
-        username: userProfile.username || '',
-        discordId: userProfile.discord_id || '',
-        shillYourself: userProfile.shill_yourself || '',
-        expertises: Array.isArray(userProfile.expertises) ? userProfile.expertises : [],
-        github: userProfile.github || '',
-        xHandle: userProfile.x_handle || ''
-      });
-    } else {
-        // If the profile is still loading, wait. If it's loaded and null, redirect.
-        // This logic will change with NextAuth's useSession which provides a status.
-        // For now, we assume if there's a session but no profile, they need onboarding.
-        if (session && userProfile === null) {
-            // A small delay to ensure context has had time to load profile
-            setTimeout(() => {
-                if(!userProfile) router.push('/onboarding');
-            }, 500);
-        }
+    if (!userProfile && !loading && session) {
+      router.push('/onboarding');
     }
-  }, [session, userProfile, router]);
+  }, [session, userProfile, loading, router]);
+
+  const handleQuickEdit = async (projectId: string, updates: Partial<Project>) => {
+    if (!userProfile) return;
+    
+    try {
+      await ProjectService.quickUpdateProject(projectId, updates, userProfile.id);
+      toast.success('Project updated successfully! ✨');
+      
+      // Update the project in local state for immediate UI feedback
+      setUserProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === projectId 
+            ? { ...project, ...updates }
+            : project
+        )
+      );
+    } catch (error) {
+      console.error('Quick edit error:', error);
+      toast.error('Failed to update project');
+    }
+  };
+
+  const handleEdit = (project: Project) => {
+    setEditingProject(project);
+  };
+
+  const handleEditMore = (project: Project) => {
+    setEditingProject(project);
+  };
+
+  const handleProjectUpdate = async (data: UpdateProjectData) => {
+    if (!userProfile || !editingProject) return;
+    
+    try {
+      setIsLoading(true);
+      await ProjectService.updateProject(data, userProfile.id);
+      toast.success('Project updated successfully! ✨');
+      
+      // Update the project in local state
+      setUserProjects(prevProjects => 
+        prevProjects.map(project => 
+          project.id === editingProject.id 
+            ? { ...project, ...data }
+            : project
+        )
+      );
+      
+      setEditingProject(null);
+    } catch (error) {
+      console.error('Full edit error:', error);
+      toast.error('Failed to update project');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleProjectDelete = async (projectId: string) => {
+    if (!userProfile) return;
+    
+    try {
+      setIsLoading(true);
+      await ProjectService.deleteProject(projectId, userProfile.id);
+      toast.success('Project deleted successfully');
+      
+      // Remove the project from local state
+      setUserProjects(prevProjects => 
+        prevProjects.filter(project => project.id !== projectId)
+      );
+      
+      setEditingProject(null);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Failed to delete project');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -216,9 +271,9 @@ export default function ProfilePage() {
         {/* Profile Info Bar */}
         <div className="relative bg-card border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-end justify-between py-4">
-              {/* Avatar & Basic Info */}
-              <div className="flex items-end gap-4">
+            <div className="flex items-center justify-between py-6">
+              {/* Avatar & User Info - Centered Layout */}
+              <div className="flex items-center gap-6">
                 <div className="relative -mt-16">
                   <div className="w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center text-primary-foreground text-4xl font-bold shadow-xl border-4 border-background">
                     {userProfile.username?.charAt(0).toUpperCase() || 'U'}
@@ -228,17 +283,48 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 
-                <div className="pb-2">
-                  <h1 className="text-3xl font-bold text-foreground">{userProfile.username}</h1>
-                  <p className="text-muted-foreground">Builder in the NSphere Community</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm text-muted-foreground">{userProjects.length} projects</span>
-                    {userProfile.expertises && userProfile.expertises.length > 0 && (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-sm text-muted-foreground">{userProfile.expertises.length} expertises</span>
-                      </>
-                    )}
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <h1 className="text-3xl font-bold text-foreground">{userProfile.username}</h1>
+                    <p className="text-muted-foreground">Builder in the NSphere Community</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">{userProjects.length} projects</span>
+                      {userProfile.expertises && userProfile.expertises.length > 0 && (
+                        <>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-sm text-muted-foreground">{userProfile.expertises.length} expertises</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Social Links - Better positioned */}
+                    <div className="flex items-center gap-2">
+                      {userProfile.github && (
+                        <a 
+                          href={`https://github.com/${userProfile.github}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title={`@${userProfile.github}`}
+                        >
+                          <Github className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </a>
+                      )}
+                      {userProfile.x_handle && (
+                        <a 
+                          href={`https://twitter.com/${userProfile.x_handle}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title={`@${userProfile.x_handle}`}
+                        >
+                          <Twitter className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -247,10 +333,13 @@ export default function ProfilePage() {
               <div className="flex gap-2 pb-2">
                 {!isEditing ? (
                   <>
-                    <Button onClick={() => setIsEditing(true)} className="shadow-lg">
-                      <Edit className="w-4 h-4 mr-2" /> Edit Profile
+                    <Button onClick={() => router.push('/projects')} className="shadow-lg">
+                      <Plus className="w-4 h-4 mr-2" /> Create Project
                     </Button>
-                    <Button onClick={refreshProfile} variant="outline">
+                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button onClick={refreshProfile} variant="outline" size="sm">
                       <RefreshCw className="w-4 h-4" />
                     </Button>
                   </>
@@ -322,65 +411,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Social Links Card */}
-              <div className="bg-card rounded-xl border border-border p-6">
-                <h3 className="flex items-center gap-2 font-semibold text-foreground mb-4">
-                  <Github className="w-4 h-4" />
-                  Social Links
-                </h3>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">GitHub</label>
-                      <input
-                        type="text"
-                        value={formData.github}
-                        onChange={(e) => handleInputChange('github', e.target.value)}
-                        className="w-full mt-1 p-3 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        placeholder="your-github-username"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">X (Twitter)</label>
-                      <input
-                        type="text"
-                        value={formData.xHandle}
-                        onChange={(e) => handleInputChange('xHandle', e.target.value)}
-                        className="w-full mt-1 p-3 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        placeholder="your-twitter-handle"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {userProfile.github && (
-                      <a 
-                        href={`https://github.com/${userProfile.github}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors"
-                      >
-                        <Github className="w-5 h-5 text-muted-foreground" />
-                        <span className="font-medium">@{userProfile.github}</span>
-                      </a>
-                    )}
-                    {userProfile.x_handle && (
-                      <a 
-                        href={`https://x.com/${userProfile.x_handle}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors"
-                      >
-                        <Twitter className="w-5 h-5 text-muted-foreground" />
-                        <span className="font-medium">@{userProfile.x_handle}</span>
-                      </a>
-                    )}
-                    {!userProfile.github && !userProfile.x_handle && (
-                      <p className="text-muted-foreground italic text-sm">No social links yet...</p>
-                    )}
-                  </div>
-                )}
-              </div>
+
 
               {/* Expertises Card */}
               <div className="bg-card rounded-xl border border-border p-6">
@@ -428,23 +459,12 @@ export default function ProfilePage() {
 
           {/* Right Side - Projects */}
           <div className="lg:col-span-2">
-            <div className="bg-card rounded-xl border border-border p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
-                  <Briefcase className="w-5 h-5" />
-                  My Projects
-                  <span className="text-sm font-normal text-muted-foreground">
-                    ({userProjects.length}/3)
-                  </span>
-                </h2>
-                
-                {userProjects.length < 3 && (
-                  <Button onClick={() => router.push('/projects')} size="sm" className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Create Project
-                  </Button>
-                )}
-              </div>
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
+                <Briefcase className="w-5 h-5" />
+                Projects
+              </h2>
+            </div>
 
               {projectsLoading ? (
                 <div className="flex justify-center py-12">
@@ -467,7 +487,15 @@ export default function ProfilePage() {
                   {/* Projects Grid */}
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     {getCurrentProjects().map((project) => (
-                      <ProjectCard key={project.id} project={project} />
+                      <ProjectCard 
+                        key={project.id} 
+                        project={project}
+                        canEdit={true}
+                        currentUserId={userProfile?.id}
+                        onEdit={handleEdit}
+                        onQuickEdit={handleQuickEdit}
+                        onEditMore={() => handleEditMore(project)}
+                      />
                     ))}
                   </div>
 
@@ -516,10 +544,24 @@ export default function ProfilePage() {
                   )}
                 </div>
               )}
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Full Edit Project Modal */}
+      {editingProject && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <ProjectForm
+              project={editingProject}
+              onUpdate={handleProjectUpdate}
+              onDelete={handleProjectDelete}
+              onCancel={() => setEditingProject(null)}
+              isLoading={isLoading}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

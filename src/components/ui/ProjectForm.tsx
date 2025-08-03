@@ -7,18 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ImageUpload } from './ImageUpload';
 import { CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS, Project } from '@/types/project';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ProjectFormProps {
   project?: Project;
   onCreate?: (data: CreateProjectData) => Promise<void>;
   onUpdate?: (data: UpdateProjectData) => Promise<void>;
+  onDelete?: (projectId: string) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export function ProjectForm({ project, onCreate, onUpdate, onCancel, isLoading = false }: ProjectFormProps) {
+export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, isLoading = false }: ProjectFormProps) {
   const [formData, setFormData] = useState<CreateProjectData>({
     title: '',
     description: '',
@@ -233,9 +234,27 @@ export function ProjectForm({ project, onCreate, onUpdate, onCancel, isLoading =
           <Button type="submit" disabled={isLoading} className="flex-1">
             {isLoading ? 'Saving...' : (project ? 'Update Project' : 'Create Project')}
           </Button>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-            Cancel
-          </Button>
+          <div className="flex gap-2">
+            {project && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive" 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                    onDelete(project.id);
+                  }
+                }}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+              Cancel
+            </Button>
+          </div>
         </div>
       </form>
     </div>
