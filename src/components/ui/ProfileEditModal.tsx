@@ -8,8 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ProfileFormData, EXPERTISE_OPTIONS, UserProfile, extractProfileFromDiscord } from '@/types/profile';
-import { Save, X, User, Github, Twitter, Zap, Download, RefreshCw } from 'lucide-react';
+import { ProfileFormData, EXPERTISE_OPTIONS, extractProfileFromDiscord } from '@/types/profile';
+import { Save, X, User, Zap, Download, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
@@ -17,7 +17,7 @@ interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ProfileFormData) => Promise<void>;
-  userProfile: UserProfile | null;
+  userProfile: Record<string, unknown> | null;
   isLoading: boolean;
 }
 

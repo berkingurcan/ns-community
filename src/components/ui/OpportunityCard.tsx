@@ -39,13 +39,12 @@ export function OpportunityCard({ project, currentUserId, timeAgo, onApply, onCa
 
   // Get project category
   const category = PROJECT_CATEGORIES.find(cat => 
-    project.categories?.includes(cat.id) || 
-    project.category === cat.id
+    project.categories?.includes(cat.id)
   );
 
   // Get collaboration types
   const lookingForTypes = COLLABORATION_TYPES.filter(type => 
-    project.looking_for_help?.includes(type.id)
+    project.looking_for_collaboration?.includes(type.id)
   );
 
   const isOwner = currentUserId === project.user_id;

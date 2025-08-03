@@ -138,7 +138,7 @@ const CollaborationDemoPage = () => {
   const [collaborationRequests, setCollaborationRequests] = useState<CollaborationRequest[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+
 
 
   useEffect(() => {
@@ -148,7 +148,6 @@ const CollaborationDemoPage = () => {
   }, [userProfile]);
 
   const handleRequestCollaboration = async (data: CreateCollaborationRequestData) => {
-    setIsLoading(true);
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -186,7 +185,6 @@ const CollaborationDemoPage = () => {
   };
 
   const handleAcceptRequest = async (requestId: string) => {
-    setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -205,7 +203,6 @@ const CollaborationDemoPage = () => {
   };
 
   const handleDenyRequest = async (requestId: string) => {
-    setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -224,7 +221,6 @@ const CollaborationDemoPage = () => {
   };
 
   const handleArchiveRequest = async (requestId: string) => {
-    setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -239,7 +235,6 @@ const CollaborationDemoPage = () => {
   };
 
   const handleQuickEdit = async (projectId: string, updates: Partial<Project>) => {
-    setIsLoading(true);
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1500));

@@ -12,7 +12,7 @@ import { ProjectForm } from '@/components/ui/ProjectForm';
 import { ProfileEditModal } from '@/components/ui/ProfileEditModal';
 import { Briefcase, Edit, Loader2, RefreshCw, User, ChevronLeft, ChevronRight, Plus, Coins, History, ArrowUpRight, ArrowDownLeft, Github, Twitter, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { ProfileFormData } from '@/types/profile';
+import { ProfileFormData, validateProfileForm } from '@/types/profile';
 import { Project, UpdateProjectData } from '@/types/project';
 import { CoinTransaction, COIN_TRANSACTION_LABELS } from '@/types/coin';
 import { toast } from 'sonner';
@@ -254,9 +254,9 @@ export default function ProfilePage() {
               {/* Avatar & User Info - Centered Layout */}
               <div className="flex items-center gap-6">
                 <div className="relative -mt-16">
-                  {session?.user?.image ? (
+                  {session?.user ? (
                     <Image
-                      src={session.user.image}
+                      src={session.user?.user_metadata?.avatar_url || '/placeholder-avatar.png'}
                       alt={`${userProfile.username}&apos;s profile`}
                       width={128}
                       height={128}
@@ -578,7 +578,7 @@ export default function ProfilePage() {
         isOpen={showProfileEdit}
         onClose={() => setShowProfileEdit(false)}
         onSave={handleProfileSave}
-        userProfile={userProfile}
+        userProfile={userProfile as unknown as Record<string, unknown>}
         isLoading={isLoading}
       />
     </div>

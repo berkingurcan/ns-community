@@ -260,7 +260,7 @@ export function ImageUpload({
               className="space-y-4"
             >
               <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
-                <Image className="w-8 h-8" alt="" />
+                <Image className="w-8 h-8" />
               </div>
               <div>
                 <p className="text-sm text-foreground mb-1">

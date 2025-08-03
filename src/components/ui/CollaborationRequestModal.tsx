@@ -82,7 +82,7 @@ export function CollaborationRequestModal({
 
 
 
-  if (!userProfile?.discord_username) {
+  if (!userProfile?.discord_id) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent>
@@ -132,9 +132,9 @@ export function CollaborationRequestModal({
                 {spotsLeft} spots left
               </div>
             </div>
-            {project.collaboration_description && (
+            {project.notes_for_requests && (
               <p className="text-sm text-muted-foreground mb-3">
-                {project.collaboration_description}
+                {project.notes_for_requests}
               </p>
             )}
           </div>
@@ -204,7 +204,7 @@ export function CollaborationRequestModal({
           <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-blue-600 dark:text-blue-400">💬</span>
-              <span>Your Discord: <strong>{userProfile.discord_username}</strong></span>
+              <span>Your Discord: <strong>{userProfile.discord_id}</strong></span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               The founder will contact you here if your request is accepted.

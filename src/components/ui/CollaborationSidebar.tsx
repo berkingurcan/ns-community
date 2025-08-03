@@ -176,7 +176,7 @@ export function CollaborationSidebar({
                         isProcessing={processingRequests.has(request.id)}
                         onAccept={() => handleAccept(request.id)}
                         onDeny={() => handleDeny(request.id)}
-                        getCollaborationType={getCollaborationType}
+                        getCollaborationType={() => ({ label: 'Collaboration', icon: () => null })}
                       />
                     ))}
                   </div>
@@ -196,7 +196,7 @@ export function CollaborationSidebar({
                         request={request}
                         isProcessing={processingRequests.has(request.id)}
                         onArchive={() => handleArchive(request.id)}
-                        getCollaborationType={getCollaborationType}
+                        getCollaborationType={() => ({ label: 'Collaboration', icon: () => null })}
                         isAccepted
                       />
                     ))}
@@ -225,7 +225,7 @@ interface RequestCardProps {
   onAccept?: () => void;
   onDeny?: () => void;
   onArchive?: () => void;
-  getCollaborationType: (typeId: CollaborationType) => { label: string; icon: React.ComponentType };
+  getCollaborationType: (typeId: CollaborationType) => { label: string; icon: React.ComponentType } | undefined;
   isAccepted?: boolean;
 }
 
@@ -263,7 +263,7 @@ function RequestCard({
       {/* Collaboration Type */}
       {collaborationType && (
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm">{collaborationType.emoji}</span>
+          <span className="text-sm">🤝</span>
           <Badge variant="secondary" className="text-xs">
             {collaborationType.label}
           </Badge>
