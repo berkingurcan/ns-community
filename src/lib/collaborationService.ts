@@ -159,14 +159,14 @@ export class CollaborationService {
     userId: string,
     callback: (payload: { eventType: string; new: CollaborationRequest; old?: CollaborationRequest }) => void
   ) {
-    return supabase
+    return supabase 
       .channel('collaboration_requests')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'collaboration_requests',
+          table: 'collaboration_requests', 
           filter: `project.user_id=eq.${userId}`
         },
         callback
