@@ -578,7 +578,7 @@ export default function ProfilePage() {
         isOpen={showProfileEdit}
         onClose={() => setShowProfileEdit(false)}
         onSave={handleProfileSave}
-        userProfile={userProfile as unknown as Record<string, unknown>}
+        userProfile={userProfile}
         isLoading={isLoading}
       />
     </div>

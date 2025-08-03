@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/label';
 import { ImageUploadService } from '@/lib/imageUpload';
 import { useAuth } from '@/context/AuthContext';
-import { Image, X, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 
 interface ImageUploadProps {
   currentImageUrl?: string;
@@ -260,7 +260,7 @@ export function ImageUpload({
               className="space-y-4"
             >
               <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
-                <Image className="w-8 h-8" />
+                <Upload className="w-8 h-8" />
               </div>
               <div>
                 <p className="text-sm text-foreground mb-1">

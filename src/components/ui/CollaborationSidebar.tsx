@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/Button';
 import { 
   CollaborationRequest, 
-  COLLABORATION_TYPES,
   CollaborationType 
 } from '@/types/project';
 import { 
@@ -102,9 +101,7 @@ export function CollaborationSidebar({
     }
   };
 
-  const getCollaborationType = (typeId: CollaborationType) => {
-    return COLLABORATION_TYPES.find(t => t.id === typeId);
-  };
+
 
   return (
     <>

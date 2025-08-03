@@ -17,7 +17,7 @@ interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: ProfileFormData) => Promise<void>;
-  userProfile: Record<string, unknown> | null;
+  userProfile: UserProfile | null;
   isLoading: boolean;
 }
 
