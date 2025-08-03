@@ -1,6 +1,6 @@
 'use client';
 
-import { Project } from '@/types/project';
+import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, COLLABORATION_STATUS, CreateCollaborationRequestData } from '@/types/project';
 import { Button } from '@/components/ui/Button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import {
@@ -18,14 +18,19 @@ import {
   RefreshCw,
   Github,
   Twitter,
-  ExternalLink
+  ExternalLink,
+  Users,
+  UserPlus
 } from 'lucide-react';
 
 interface ProjectCardProps {
   project: Project;
   onEdit?: (project: Project) => void;
   onDelete?: (projectId: string) => void;
+  onRequestCollaboration?: (data: CreateCollaborationRequestData) => Promise<void>;
   canEdit?: boolean;
+  canRequestCollaboration?: boolean;
+  currentUserId?: string;
 }
 
 import { VariantProps } from 'class-variance-authority';
@@ -39,7 +44,15 @@ const statusVariantMap: Record<Project['status'], VariantProps<typeof badgeVaria
   Draft: 'secondary',
 };
 
-export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: ProjectCardProps) {
+export function ProjectCard({ 
+  project, 
+  onEdit, 
+  onDelete, 
+  onRequestCollaboration,
+  canEdit = false,
+  canRequestCollaboration = false,
+  currentUserId
+}: ProjectCardProps) {
   const getHost = (url: string | undefined | null) => {
     if (!url) return '';
     try {
@@ -47,7 +60,31 @@ export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: Proj
     } catch {
       return url;
     }
-  }
+  };
+
+  // Helper functions for collaboration system
+  const getProjectCategory = () => {
+    return PROJECT_CATEGORIES.find(cat => cat.id === project.category);
+  };
+
+  const getCollaborationStatus = () => {
+    return COLLABORATION_STATUS.find(status => status.id === project.collaboration_status);
+  };
+
+  const getCollaborationTypes = () => {
+    return project.looking_for_collaboration?.map(typeId => 
+      COLLABORATION_TYPES.find(type => type.id === typeId)
+    ).filter(Boolean) || [];
+  };
+
+  const isOwnProject = currentUserId === project.user_id;
+  const spotsLeft = project.max_collaborators - project.current_collaborators;
+  const isCollaborationOpen = project.collaboration_status === 'open' || project.collaboration_status === 'selective';
+  const canShowCollaborationButton = !isOwnProject && canRequestCollaboration && isCollaborationOpen && spotsLeft > 0;
+
+  const category = getProjectCategory();
+  const collaborationStatus = getCollaborationStatus();
+  const lookingForTypes = getCollaborationTypes();
 
   return (
     <Card className="hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
@@ -69,8 +106,40 @@ export function ProjectCard({ project, onEdit, onDelete, canEdit = false }: Proj
             <h3 className="text-xl font-bold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-300">
               {project.title}
             </h3>
-            <div className="flex items-center text-sm text-muted-foreground mt-1">
-              <Badge variant={statusVariantMap[project.status]} className="capitalize">{project.status}</Badge>
+            <div className="flex items-center flex-wrap gap-2 mt-2">
+              <Badge variant={statusVariantMap[project.status]} className="capitalize">
+                {project.status}
+              </Badge>
+              
+              {/* Category Badge */}
+              {category && (
+                <Badge variant="outline" className="text-xs">
+                  {category.emoji} {category.label}
+                </Badge>
+              )}
+              
+              {/* Collaboration Status Badge */}
+              {collaborationStatus && collaborationStatus.id !== 'not-looking' && (
+                <Badge 
+                  variant="secondary" 
+                  className={`text-xs ${
+                    collaborationStatus.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                    collaborationStatus.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                    collaborationStatus.color === 'blue' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                    ''
+                  }`}
+                >
+                  {collaborationStatus.emoji} {collaborationStatus.label}
+                </Badge>
+              )}
+              
+              {/* Team Size Info */}
+              {isCollaborationOpen && (
+                <Badge variant="outline" className="text-xs">
+                  <Users className="w-3 h-3 mr-1" />
+                  {spotsLeft}/{project.max_collaborators} spots
+                </Badge>
+              )}
             </div>
           </div>
         </div>
