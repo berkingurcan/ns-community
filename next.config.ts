@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Turbopack handles module resolution automatically
+  // No webpack config needed when using Turbopack
 };
 
 export default nextConfig;
