@@ -52,18 +52,47 @@ const ProjectsPage = () => {
 
   // Handle project creation
   const handleCreateProject = async (data: CreateProjectData) => {
-    if (!walletAddress || !session) return;
+    if (!walletAddress || !session) {
+      console.error('Missing wallet address or session');
+      return;
+    }
 
     setIsSubmitting(true);
+    
+    // Add timeout for the entire operation
+    const operationTimeout = 60000; // 60 seconds
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Project creation timed out')), operationTimeout)
+    );
+
     try {
-      await ProjectService.createProject(data, walletAddress, session.user.id);
-      await loadUserProjects();
-      setShowForm(false);
-      setActiveTab('my-projects');
+      const createProjectPromise = async () => {
+        await ProjectService.createProject(data, walletAddress, session.user.id);
+        await loadUserProjects();
+        setShowForm(false);
+        setActiveTab('my-projects');
+      };
+
+      await Promise.race([createProjectPromise(), timeoutPromise]);
+      
     } catch (error: any) {
       console.error('Error creating project:', error);
-      alert(error.message || 'Failed to create project');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to create project';
+      if (error.message.includes('timeout')) {
+        errorMessage = 'Project creation timed out. Please check your connection and try again.';
+      } else if (error.message.includes('3 projects')) {
+        errorMessage = 'You can only create up to 3 projects. Please delete an existing project first.';
+      } else if (error.message.includes('authentication') || error.message.includes('Permission denied')) {
+        errorMessage = 'Authentication error. Please sign in again and try.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     } finally {
+      // Ensure loading state is always reset
       setIsSubmitting(false);
     }
   };

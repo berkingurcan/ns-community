@@ -62,47 +62,72 @@ export function ImageUpload({
     setIsUploading(true);
     let tempPreviewUrl: string | null = null;
     
+    // Add timeout for the entire upload process
+    const uploadTimeout = 90000; // 90 seconds total timeout
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Image upload timed out')), uploadTimeout)
+    );
+    
     try {
-      // Check storage setup first
-      const setupCheck = await ImageUploadService.checkStorageSetup();
-      if (!setupCheck.isSetup) {
-        throw new Error(setupCheck.error || 'Storage not properly configured');
-      }
-
-      // Create local preview immediately
-      tempPreviewUrl = URL.createObjectURL(file);
-      blobUrlsToCleanup.current.add(tempPreviewUrl);
-      setLocalPreviewUrl(tempPreviewUrl);
-      setPreviewUrl(tempPreviewUrl);
-
-      // Compress image if it's large
-      let fileToUpload = file;
-      if (file.size > 1024 * 1024) { // If > 1MB, compress
-        try {
-          fileToUpload = await ImageUploadService.compressImage(file, 800, 0.8);
-        } catch (error) {
-          console.warn('Image compression failed, using original:', error);
+      const uploadProcess = async () => {
+        // Check storage setup first
+        const setupCheck = await ImageUploadService.checkStorageSetup();
+        if (!setupCheck.isSetup) {
+          throw new Error(setupCheck.error || 'Storage not properly configured');
         }
-      }
 
-      // Upload to Supabase
-      const result = await ImageUploadService.uploadImage(fileToUpload, walletAddress);
-      
-      // Only clean up and update after successful upload
-      if (tempPreviewUrl) {
-        URL.revokeObjectURL(tempPreviewUrl);
-        blobUrlsToCleanup.current.delete(tempPreviewUrl);
-        setLocalPreviewUrl(null);
-      }
-      
-      // Update to the uploaded URL
-      setPreviewUrl(result.url);
-      onImageUploaded(result.url);
-      setErrorMessage(null);
+        // Create local preview immediately
+        tempPreviewUrl = URL.createObjectURL(file);
+        blobUrlsToCleanup.current.add(tempPreviewUrl);
+        setLocalPreviewUrl(tempPreviewUrl);
+        setPreviewUrl(tempPreviewUrl);
+
+        // Compress image if it's large
+        let fileToUpload = file;
+        if (file.size > 1024 * 1024) { // If > 1MB, compress
+          try {
+            fileToUpload = await ImageUploadService.compressImage(file, 800, 0.8);
+          } catch (error) {
+            console.warn('Image compression failed, using original:', error);
+            // Continue with original file if compression fails
+          }
+        }
+
+        // Upload to Supabase
+        const result = await ImageUploadService.uploadImage(fileToUpload, walletAddress);
+        
+        // Only clean up and update after successful upload
+        if (tempPreviewUrl) {
+          URL.revokeObjectURL(tempPreviewUrl);
+          blobUrlsToCleanup.current.delete(tempPreviewUrl);
+          setLocalPreviewUrl(null);
+        }
+        
+        // Update to the uploaded URL
+        setPreviewUrl(result.url);
+        onImageUploaded(result.url);
+        setErrorMessage(null);
+      };
+
+      await Promise.race([uploadProcess(), timeoutPromise]);
       
     } catch (error: unknown) {
       console.error('Upload failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      
+      // Provide specific error messages
+      let errorMessage = 'Failed to upload image';
+      if (error instanceof Error) {
+        if (error.message.includes('timeout') || error.message.includes('timed out')) {
+          errorMessage = 'Upload timed out. Please check your connection and try a smaller image.';
+        } else if (error.message.includes('authentication') || error.message.includes('Permission denied')) {
+          errorMessage = 'Authentication error. Please sign in again and try.';
+        } else if (error.message.includes('Storage not properly configured')) {
+          errorMessage = 'Storage system is not available. Please try again later.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setErrorMessage(errorMessage);
       
       // Clean up local preview on error
@@ -115,6 +140,7 @@ export function ImageUpload({
       // Reset to current image or null, but don't cause flash
       setPreviewUrl(currentImageUrl || null);
     } finally {
+      // Ensure uploading state is always reset
       setIsUploading(false);
     }
   }, [walletAddress, currentImageUrl, onImageUploaded]);

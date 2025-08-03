@@ -84,38 +84,51 @@ export class ProjectService {
     walletAddress: string, 
     userId?: string
   ): Promise<Project> {
-    // First check if user already has 3 projects
-    const existingProjects = await this.getUserProjects(walletAddress);
-    if (existingProjects.length >= 3) {
-      throw new Error('You can only create up to 3 projects');
+    try {
+      // First check if user already has 3 projects
+      const existingProjects = await this.getUserProjects(walletAddress);
+      if (existingProjects.length >= 3) {
+        throw new Error('You can only create up to 3 projects');
+      }
+
+      // Clean the data to remove undefined values
+      const cleanProjectData = {
+        project_name: projectData.project_name,
+        elevator_pitch: projectData.elevator_pitch,
+        links: projectData.links,
+        founders: projectData.founders,
+        looking_for: projectData.looking_for,
+        ...(projectData.logo_url && { logo_url: projectData.logo_url }),
+      };
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          ...cleanProjectData,
+          wallet_address: walletAddress,
+          user_id: userId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating project:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('Project creation failed: No data returned');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in createProject:', error);
+      // Re-throw with more context if needed
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Failed to create project: Unknown error');
     }
-
-    // Clean the data to remove undefined values
-    const cleanProjectData = {
-      project_name: projectData.project_name,
-      elevator_pitch: projectData.elevator_pitch,
-      links: projectData.links,
-      founders: projectData.founders,
-      looking_for: projectData.looking_for,
-      ...(projectData.logo_url && { logo_url: projectData.logo_url }),
-    };
-
-    const { data, error } = await supabase
-      .from('projects')
-      .insert({
-        ...cleanProjectData,
-        wallet_address: walletAddress,
-        user_id: userId,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating project:', error);
-      throw error;
-    }
-
-    return data;
   }
 
   // Update an existing project

@@ -10,8 +10,33 @@ export class ImageUploadService {
   private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   private static readonly ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
 
-  // Diagnostic function to check storage setup
+  // Diagnostic function to check storage setup with timeout
   static async checkStorageSetup(): Promise<{ isSetup: boolean; error?: string; session?: any }> {
+    const setupTimeout = 10000; // 10 seconds timeout
+    
+    try {
+      const setupPromise = this.performStorageCheck();
+      const timeoutPromise = new Promise<{ isSetup: false; error: string }>((_, reject) =>
+        setTimeout(() => reject(new Error('Storage check timeout')), setupTimeout)
+      );
+
+      return await Promise.race([setupPromise, timeoutPromise]);
+    } catch (error: any) {
+      if (error.message.includes('timeout')) {
+        return { 
+          isSetup: false, 
+          error: 'Storage check timed out. Please check your connection.' 
+        };
+      }
+      return { 
+        isSetup: false, 
+        error: `Storage check failed: ${error.message}` 
+      };
+    }
+  }
+
+  // Internal storage check method
+  private static async performStorageCheck(): Promise<{ isSetup: boolean; error?: string; session?: any }> {
     try {
       // Check authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -73,7 +98,7 @@ export class ImageUploadService {
     return `${walletAddress}/${timestamp}_${Math.random().toString(36).substring(7)}.${extension}`;
   }
 
-  // Upload image to Supabase Storage
+  // Upload image to Supabase Storage with timeout
   static async uploadImage(file: File, walletAddress: string): Promise<ImageUploadResult> {
     // Validate file
     const validation = this.validateFile(file);
@@ -81,65 +106,81 @@ export class ImageUploadService {
       throw new Error(validation.error);
     }
 
+    const uploadTimeout = 30000; // 30 seconds timeout
+
     try {
-      // Check if user is authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Authentication error. Please sign in again.');
-      }
+      // Wrap the upload operation with timeout
+      const uploadPromise = this.performUpload(file, walletAddress);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timeout: Operation took too long')), uploadTimeout)
+      );
 
-      if (!session) {
-        throw new Error('You must be signed in to upload images.');
-      }
-
-      console.log('User is authenticated, proceeding with upload...');
-
-      // Generate unique filename
-      const fileName = this.generateFileName(walletAddress, file.name);
-      console.log('Generated filename:', fileName);
-
-      // Upload file to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(this.BUCKET_NAME)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Upload error details:', error);
-        
-        // Provide more specific error messages
-        if (error.message.includes('row-level security')) {
-          throw new Error('Permission denied. Please make sure you are signed in and try again.');
-        } else if (error.message.includes('duplicate')) {
-          throw new Error('A file with this name already exists. Please try again.');
-        } else {
-          throw new Error(`Failed to upload image: ${error.message}`);
-        }
-      }
-
-      if (!data) {
-        throw new Error('Upload failed: No data returned');
-      }
-
-      console.log('Upload successful:', data);
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(this.BUCKET_NAME)
-        .getPublicUrl(fileName);
-
-      return {
-        url: urlData.publicUrl,
-        path: fileName
-      };
+      return await Promise.race([uploadPromise, timeoutPromise]);
     } catch (error) {
       console.error('Image upload error:', error);
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error('Upload timed out. Please check your connection and try again.');
+      }
       throw error;
     }
+  }
+
+  // Internal upload method without timeout
+  private static async performUpload(file: File, walletAddress: string): Promise<ImageUploadResult> {
+    // Check if user is authenticated
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error('Authentication error. Please sign in again.');
+    }
+
+    if (!session) {
+      throw new Error('You must be signed in to upload images.');
+    }
+
+    console.log('User is authenticated, proceeding with upload...');
+
+    // Generate unique filename
+    const fileName = this.generateFileName(walletAddress, file.name);
+    console.log('Generated filename:', fileName);
+
+    // Upload file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(this.BUCKET_NAME)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Upload error details:', error);
+      
+      // Provide more specific error messages
+      if (error.message.includes('row-level security')) {
+        throw new Error('Permission denied. Please make sure you are signed in and try again.');
+      } else if (error.message.includes('duplicate')) {
+        throw new Error('A file with this name already exists. Please try again.');
+      } else {
+        throw new Error(`Failed to upload image: ${error.message}`);
+      }
+    }
+
+    if (!data) {
+      throw new Error('Upload failed: No data returned');
+    }
+
+    console.log('Upload successful:', data);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(this.BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    return {
+      url: urlData.publicUrl,
+      path: fileName
+    };
   }
 
   // Delete image from Supabase Storage
