@@ -138,10 +138,10 @@ export class ProjectService {
   ): Promise<Project> {
     const { id, ...updateData } = projectData;
 
-    // Clean the data to remove undefined values, but allow null for logo_url to clear it
-    const cleanUpdateData: any = {};
-    Object.keys(updateData).forEach(key => {
-      const value = (updateData as any)[key];
+      // Clean the data to remove undefined values, but allow null for logo_url to clear it
+  const cleanUpdateData: Record<string, unknown> = {};
+  Object.keys(updateData).forEach(key => {
+    const value = (updateData as Record<string, unknown>)[key];
       if (value !== undefined) {
         cleanUpdateData[key] = value;
       }

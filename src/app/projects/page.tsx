@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
@@ -13,7 +13,7 @@ import withAuth from '@/hoc/withAuth';
 
 const ProjectsPage = () => {
   const router = useRouter();
-  const { session, userProfile } = useAuth();
+  const { session } = useAuth();
   const { publicKey } = useWallet();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +26,7 @@ const ProjectsPage = () => {
   const walletAddress = publicKey?.toBase58();
 
   // Load user's projects
-  const loadUserProjects = async () => {
+  const loadUserProjects = useCallback(async () => {
     if (!walletAddress) return;
     
     try {
@@ -35,7 +35,7 @@ const ProjectsPage = () => {
     } catch (error) {
       console.error('Error loading projects:', error);
     }
-  };
+  }, [walletAddress]);
 
   // Initial load
   useEffect(() => {
@@ -48,7 +48,7 @@ const ProjectsPage = () => {
     if (walletAddress) {
       loadData();
     }
-  }, [walletAddress]);
+  }, [walletAddress, loadUserProjects]);
 
   // Handle project creation
   const handleCreateProject = async (data: CreateProjectData) => {
@@ -75,18 +75,18 @@ const ProjectsPage = () => {
 
       await Promise.race([createProjectPromise(), timeoutPromise]);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating project:', error);
       
       // Provide more specific error messages
       let errorMessage = 'Failed to create project';
-      if (error.message.includes('timeout')) {
+      if (error instanceof Error && error.message.includes('timeout')) {
         errorMessage = 'Project creation timed out. Please check your connection and try again.';
-      } else if (error.message.includes('3 projects')) {
+      } else if (error instanceof Error && error.message.includes('3 projects')) {
         errorMessage = 'You can only create up to 3 projects. Please delete an existing project first.';
-      } else if (error.message.includes('authentication') || error.message.includes('Permission denied')) {
+      } else if (error instanceof Error && (error.message.includes('authentication') || error.message.includes('Permission denied'))) {
         errorMessage = 'Authentication error. Please sign in again and try.';
-      } else if (error.message) {
+      } else if (error instanceof Error && error.message) {
         errorMessage = error.message;
       }
       
@@ -107,9 +107,9 @@ const ProjectsPage = () => {
       await loadUserProjects();
       setEditingProject(undefined);
       setShowForm(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating project:', error);
-      alert(error.message || 'Failed to update project');
+      alert(error instanceof Error ? error.message : 'Failed to update project');
     } finally {
       setIsSubmitting(false);
     }
@@ -137,9 +137,9 @@ const ProjectsPage = () => {
       document.body.appendChild(successMsg);
       setTimeout(() => document.body.removeChild(successMsg), 3000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error deleting project:', error);
-      alert(error.message || 'Failed to delete project. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to delete project. Please try again.');
     } finally {
       setIsDeleting(null);
     }
@@ -322,7 +322,7 @@ const ProjectsPage = () => {
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 p-8">
                 <ProjectForm
                   project={editingProject}
-                  onSubmit={editingProject ? handleUpdateProject : handleCreateProject}
+                  onSubmit={editingProject ? (data) => handleUpdateProject(data as UpdateProjectData) : (data) => handleCreateProject(data as CreateProjectData)}
                   onCancel={handleCancelForm}
                   isLoading={isSubmitting}
                   walletAddress={walletAddress!}
