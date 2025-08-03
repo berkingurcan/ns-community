@@ -20,7 +20,7 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, isLoading = false }: ProjectFormProps) {
-  const [formData, setFormData] = useState<CreateProjectData>({
+  const [formData, setFormData] = useState<Partial<CreateProjectData>>({
     title: '',
     description: '',
     tags: [],
@@ -57,10 +57,10 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
   };
 
   const addTag = () => {
-    if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
+    if (currentTag.trim() && !formData.tags?.includes(currentTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, currentTag.trim()]
+        tags: [...(prev.tags || []), currentTag.trim()]
       }));
       setCurrentTag('');
     }
@@ -69,7 +69,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: (prev.tags || []).filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -90,7 +90,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.description.trim()) {
+    if (!formData.title?.trim() || !formData.description?.trim()) {
       alert('Please fill in the project title and description');
       return;
     }
@@ -107,7 +107,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
     if (project && onUpdate) {
       await onUpdate({ ...cleanData, id: project.id });
     } else if (onCreate) {
-      await onCreate(cleanData);
+      await onCreate(cleanData as CreateProjectData);
     }
   };
 
@@ -160,7 +160,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
         <div className="space-y-2">
           <Label>Tags</Label>
           <div className="flex flex-wrap gap-2">
-            {formData.tags.map((tag) => (
+            {formData.tags?.map((tag) => (
               <Badge key={tag} variant="secondary" className="flex items-center gap-1">
                 {tag}
                 <button type="button" onClick={() => removeTag(tag)} className="text-muted-foreground hover:text-foreground">

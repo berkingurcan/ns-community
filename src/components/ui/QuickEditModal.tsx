@@ -122,7 +122,7 @@ export function QuickEditModal({
         status: formData.status,
         collaboration_status: formData.collaboration_status,
         looking_for_collaboration: formData.looking_for_collaboration,
-        notes_for_requests: notesForRequests.trim() || null,
+        notes_for_requests: notesForRequests.trim() || undefined,
         categories: formData.categories,
         updated_at: new Date().toISOString()
       };
@@ -220,7 +220,7 @@ export function QuickEditModal({
 
   const getDisplayCategories = () => {
     return showAllCategories ? PROJECT_CATEGORIES : PROJECT_CATEGORIES.filter(cat => 
-      POPULAR_CATEGORIES.includes(cat.id as ProjectCategory)
+      POPULAR_CATEGORIES.includes(cat.id)
     );
   };
 

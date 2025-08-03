@@ -59,7 +59,7 @@ export function ProjectCard({
 
   // Helper functions for collaboration system
   const getProjectCategory = () => {
-    return PROJECT_CATEGORIES.find(cat => cat.id === project.category);
+    return PROJECT_CATEGORIES.find(cat => project.categories?.includes(cat.id));
   };
 
 
@@ -140,9 +140,7 @@ export function ProjectCard({
                 )}
                 
                 <div className={`px-3 py-1.5 rounded-full text-xs font-semibold capitalize ${
-                  project.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                  project.status === 'in-development' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                  project.status === 'completed' ? 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400' :
+                  project.status === 'showcase' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                   'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                 }`}>
                   {project.status}
@@ -190,15 +188,15 @@ export function ProjectCard({
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {lookingForTypes.slice(0, 3).map((type) => (
+                {lookingForTypes.slice(0, 3).map((type, index) => type ? (
                   <div
-                    key={type.id}
+                    key={type.id || index}
                     className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 dark:text-emerald-300"
                   >
                     <span>{type.emoji}</span>
                     <span>{type.label}</span>
                   </div>
-                ))}
+                ) : null)}
                 {lookingForTypes.length > 3 && (
                   <div className="flex items-center px-3 py-1.5 bg-muted rounded-lg text-xs font-medium text-muted-foreground">
                     +{lookingForTypes.length - 3} more

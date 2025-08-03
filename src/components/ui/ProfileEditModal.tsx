@@ -1,5 +1,6 @@
 'use client';
 
+import { UserProfile } from '@/context/AuthContext';
 import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
@@ -60,7 +61,7 @@ export function ProfileEditModal({
 
     setIsSyncing(true);
     try {
-      const discordProfile = extractProfileFromDiscord(session.user);
+      const discordProfile = extractProfileFromDiscord(session.user as unknown as { user_metadata?: Record<string, unknown>; identities?: Array<Record<string, unknown>>; email?: string });
       
       setFormData(prev => ({
         ...prev,
@@ -147,9 +148,9 @@ export function ProfileEditModal({
           <div className="flex gap-4">
             {/* Discord Avatar */}
             <div className="flex-shrink-0">
-              {session?.user?.image ? (
+              {session?.user?.user_metadata?.avatar_url ? (
                 <Image
-                  src={session.user.image}
+                  src={session.user.user_metadata.avatar_url}
                   alt="Discord Avatar"
                   width={64}
                   height={64}
