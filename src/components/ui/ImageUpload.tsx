@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button } from './Button';
+import { Button } from '@/components/ui/Button';
+import { Label } from '@/components/ui/label';
 import { ImageUploadService } from '@/lib/imageUpload';
+import { Image, X, Upload } from 'lucide-react';
 
 interface ImageUploadProps {
   currentImageUrl?: string;
@@ -202,9 +204,9 @@ export function ImageUpload({
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium text-foreground mb-2">
+      <Label>
         Project Logo
-      </label>
+      </Label>
       
       {/* Error Message */}
       {errorMessage && (
@@ -222,13 +224,15 @@ export function ImageUpload({
             className="w-32 h-32 object-cover rounded-lg border-2 border-border"
           />
           {!isUploading && !isLoading && (
-            <button
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={handleRemoveImage}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center text-sm hover:bg-destructive/80"
+              className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
             >
-              ×
-            </button>
+              <X className="h-3 w-3" />
+            </Button>
           )}
           {isUploading && (
             <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
@@ -251,24 +255,23 @@ export function ImageUpload({
           }`}
         >
           <div className="space-y-4">
-            <div className="mx-auto w-12 h-12 text-secondary-foreground">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
+              <Image className="w-8 h-8" />
             </div>
             <div>
               <p className="text-sm text-foreground mb-1">
                 Drag and drop your logo here, or{' '}
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={openFileDialog}
-                  className="text-primary hover:text-primary/80 underline"
                   disabled={isUploading || isLoading}
+                  className="p-0 h-auto"
                 >
                   browse files
-                </button>
+                </Button>
               </p>
-              <p className="text-xs text-secondary-foreground">
+              <p className="text-xs text-muted-foreground">
                 PNG, JPG, GIF, WebP up to 5MB
               </p>
             </div>
@@ -286,6 +289,7 @@ export function ImageUpload({
             onClick={openFileDialog}
             disabled={isUploading || isLoading}
           >
+            <Upload className="w-4 h-4 mr-2" />
             Change Logo
           </Button>
         </div>

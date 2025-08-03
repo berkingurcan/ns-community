@@ -6,6 +6,24 @@ import { useAuth } from '@/context/AuthContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Plus,
+  Briefcase,
+  User,
+  Link2,
+  RefreshCw,
+  LogOut,
+  AlertTriangle,
+  Loader2,
+} from 'lucide-react';
 
 // Client-only wrapper to prevent hydration issues
 function ClientOnlyWalletButton({ className }: { className?: string }) {
@@ -111,9 +129,7 @@ export function Navigation() {
                 <div className="relative w-10 h-10">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-xl animate-spin-slow opacity-75 group-hover:opacity-100 transition-opacity"></div>
                   <div className="relative w-full h-full bg-gradient-to-br from-purple-600 to-blue-700 rounded-xl flex items-center justify-center shadow-2xl">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                    <Link2 className="w-6 h-6 text-white" />
                   </div>
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
@@ -130,29 +146,25 @@ export function Navigation() {
                     onClick={handleCreateProject}
                     className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-medium rounded-xl transition-all duration-300"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
+                    <Plus className="w-4 h-4" />
                     <span>Create Project</span>
                   </Button>
 
                   <Button
                     onClick={handleMyProjects}
+                    variant="ghost"
                     className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all duration-300"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
+                    <Briefcase className="w-4 h-4" />
                     <span>My Projects</span>
                   </Button>
 
                   <Button
                     onClick={handleViewProfile}
+                    variant="ghost"
                     className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all duration-300"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    <User className="w-4 h-4" />
                     <span>Profile</span>
                   </Button>
                 </>
@@ -167,12 +179,12 @@ export function Navigation() {
                 {connected && !session && (
                   <div className="flex items-center space-x-3">
                     {/* Show connected wallet info */}
-                    <div className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-blue-500/10 border border-blue-400/30 rounded-xl">
+                    <Badge variant="secondary" className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-blue-500/10 border border-blue-400/30 text-blue-300">
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-blue-300 text-sm font-medium">
+                      <span className="text-sm font-medium">
                         {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
                       </span>
-                    </div>
+                    </Badge>
 
                     <Button
                       onClick={handleLogin}
@@ -181,7 +193,7 @@ export function Navigation() {
                     >
                       {isAuthLoading ? (
                         <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           <span>Authenticating...</span>
                         </div>
                       ) : (
@@ -194,12 +206,11 @@ export function Navigation() {
                       onClick={async () => {
                         await disconnect();
                       }}
+                      variant="ghost"
                       className="bg-white/10 hover:bg-white/20 text-white font-medium px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-1"
                       title="Change Wallet"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
+                      <RefreshCw className="w-4 h-4" />
                       <span className="hidden sm:inline text-sm">Change</span>
                     </Button>
                   </div>
@@ -208,12 +219,12 @@ export function Navigation() {
                 {isNewUser && (
                   <div className="flex items-center space-x-3">
                     {/* Show connected wallet info */}
-                    <div className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-orange-500/10 border border-orange-400/30 rounded-xl">
+                    <Badge variant="secondary" className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-orange-500/10 border border-orange-400/30 text-orange-300">
                       <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                      <span className="text-orange-300 text-sm font-medium">
+                      <span className="text-sm font-medium">
                         {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
                       </span>
-                    </div>
+                    </Badge>
 
                     <Button
                       onClick={() => router.push('/onboarding')}
@@ -227,12 +238,11 @@ export function Navigation() {
                       onClick={async () => {
                         await disconnect();
                       }}
+                      variant="ghost"
                       className="bg-white/10 hover:bg-white/20 text-white font-medium px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-1"
                       title="Change Wallet"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
+                      <RefreshCw className="w-4 h-4" />
                       <span className="hidden sm:inline text-sm">Change</span>
                     </Button>
                   </div>
@@ -240,21 +250,20 @@ export function Navigation() {
 
                 {isExistingUser && (
                   <div className="flex items-center space-x-3">
-                    <div className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-green-500/10 border border-green-400/30 rounded-xl">
+                    <Badge variant="secondary" className="hidden sm:flex items-center space-x-2 px-3 py-2 bg-green-500/10 border border-green-400/30 text-green-300">
                       <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-300 text-sm font-medium">
+                      <span className="text-sm font-medium">
                         {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-4)}
                       </span>
-                    </div>
+                    </Badge>
                     
                     <Button
                       onClick={handleLogout}
+                      variant="ghost"
                       className="bg-red-500/10 hover:bg-red-500/20 border border-red-400/30 hover:border-red-400/50 text-red-300 hover:text-red-200 font-medium px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 flex items-center space-x-1"
                       title="Logout and Disconnect Wallet"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
+                      <LogOut className="w-4 h-4" />
                       <span className="hidden sm:inline text-sm">Logout</span>
                     </Button>
                   </div>
@@ -265,28 +274,29 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* NFT Required Popup */}
-      {showNFTPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-red-500/30">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 mx-auto bg-red-500/10 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white">NFT Required</h3>
-              <p className="text-gray-300">{nftError}</p>
-              <Button
-                onClick={() => setShowNFTPopup(false)}
-                className="w-full bg-red-600 hover:bg-red-500 text-white font-medium py-3 rounded-xl transition-all duration-300"
-              >
-                Close
-              </Button>
+      {/* NFT Required Dialog */}
+      <Dialog open={showNFTPopup} onOpenChange={setShowNFTPopup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
+            <DialogTitle className="text-xl font-bold">NFT Required</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {nftError}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={() => setShowNFTPopup(false)}
+              variant="destructive"
+              className="w-full"
+            >
+              Close
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

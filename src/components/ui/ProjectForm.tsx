@@ -1,9 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from './Button';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from './ImageUpload';
 import { CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS, Project } from '@/types/project';
+import { Plus, X } from 'lucide-react';
 
 interface ProjectFormProps {
   project?: Project;
@@ -142,15 +147,15 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Project Name */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+        <div className="space-y-2">
+          <Label htmlFor="project_name">
             Project Name *
-          </label>
-          <input
+          </Label>
+          <Input
+            id="project_name"
             type="text"
             value={formData.project_name}
             onChange={(e) => handleInputChange('project_name', e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Enter your project name"
             required
           />
@@ -166,62 +171,63 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
         />
 
         {/* Elevator Pitch */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+        <div className="space-y-2">
+          <Label htmlFor="elevator_pitch">
             Elevator Pitch *
-          </label>
-          <textarea
+          </Label>
+          <Textarea
+            id="elevator_pitch"
             value={formData.elevator_pitch}
             onChange={(e) => handleInputChange('elevator_pitch', e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-vertical"
             placeholder="Describe your project in a few sentences..."
+            className="resize-vertical"
             required
           />
         </div>
 
         {/* Founders */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+        <div className="space-y-2">
+          <Label>
             Founders&apos; X Handles (optional)
-          </label>
+          </Label>
           <div className="space-y-2">
             {formData.founders.filter(f => f.trim() !== '').map((founder, index) => (
               <div key={index} className="flex items-center gap-2">
-                <span className="flex-1 px-3 py-2 bg-secondary text-secondary-foreground rounded-md">
+                <Badge variant="secondary" className="flex-1 justify-between px-3 py-2">
                   {founder}
-                </span>
+                </Badge>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => removeFounder(index)}
                 >
-                  Remove
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             ))}
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={currentFounder}
                 onChange={(e) => setCurrentFounder(e.target.value)}
-                className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Add founder name..."
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFounder())}
+                className="flex-1"
               />
-              <Button type="button" onClick={addFounder} variant="outline">
-                Add
+              <Button type="button" onClick={addFounder} variant="outline" size="sm">
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
 
         {/* Links */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+        <div className="space-y-2">
+          <Label>
             Project Links
-          </label>
+          </Label>
           <div className="space-y-2">
             {formData.links.filter(l => l.trim() !== '').map((link, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -229,7 +235,7 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 px-3 py-2 bg-secondary text-primary rounded-md underline hover:text-primary/80"
+                  className="flex-1 px-3 py-2 bg-secondary text-primary rounded-md underline hover:text-primary/80 truncate"
                 >
                   {link}
                 </a>
@@ -239,34 +245,34 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
                   size="sm"
                   onClick={() => removeLink(index)}
                 >
-                  Remove
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             ))}
             <div className="flex gap-2">
-              <input
+              <Input
                 type="url"
                 value={currentLink}
                 onChange={(e) => setCurrentLink(e.target.value)}
-                className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="https://..."
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLink())}
+                className="flex-1"
               />
-              <Button type="button" onClick={addLink} variant="outline">
-                Add
+              <Button type="button" onClick={addLink} variant="outline" size="sm">
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
 
         {/* Looking For */}
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+        <div className="space-y-2">
+          <Label>
             Looking For (Expertise)
-          </label>
+          </Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {EXPERTISE_OPTIONS.map((expertise) => (
-              <label
+              <Label
                 key={expertise}
                 className={`flex items-center p-3 border rounded-md cursor-pointer transition-colors ${
                   formData.looking_for.includes(expertise)
@@ -281,7 +287,7 @@ export function ProjectForm({ project, onSubmit, onCancel, isLoading = false, wa
                   className="sr-only"
                 />
                 <span className="text-sm">{expertise}</span>
-              </label>
+              </Label>
             ))}
           </div>
         </div>

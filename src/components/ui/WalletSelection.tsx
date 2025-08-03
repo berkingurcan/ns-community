@@ -4,10 +4,22 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletName } from '@solana/wallet-adapter-base';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+// Button component removed as it's not used in this component
+import { Badge } from '@/components/ui/badge';
+import {
+  Check,
+  ChevronRight,
+  Loader2,
+  Zap,
+  Shield,
+  Globe,
+  Flame,
+  Crown,
+} from 'lucide-react';
 
 interface WalletOption {
   name: WalletName;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   displayName: string;
   description: string;
   color: string;
@@ -17,7 +29,7 @@ interface WalletOption {
 const walletOptions: WalletOption[] = [
   {
     name: 'Phantom' as WalletName,
-    icon: '👻',
+    icon: Crown,
     displayName: 'Phantom',
     description: 'Popular & secure',
     color: 'from-purple-500 to-indigo-600',
@@ -25,28 +37,28 @@ const walletOptions: WalletOption[] = [
   },
   {
     name: 'Backpack' as WalletName,
-    icon: '🎒',
+    icon: Shield,
     displayName: 'Backpack',
     description: 'Next-level wallet',
     color: 'from-indigo-500 to-purple-600',
   },
   {
     name: 'Brave' as WalletName,
-    icon: '🦁',
+    icon: Zap,
     displayName: 'Brave Wallet',
     description: 'Built-in browser wallet',
     color: 'from-orange-600 to-red-500',
   },
   {
     name: 'Solflare' as WalletName,
-    icon: '🔥',
+    icon: Flame,
     displayName: 'Solflare',
     description: 'Feature-rich wallet',
     color: 'from-orange-500 to-red-600',
   },
   {
     name: 'Torus' as WalletName,
-    icon: '🌐',
+    icon: Globe,
     displayName: 'Torus',
     description: 'Social login wallet',
     color: 'from-blue-500 to-cyan-600',
@@ -144,9 +156,9 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
             >
               {/* Popular badge */}
               {walletOption.isPopular && (
-                <div className="absolute -top-2 -right-2 px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold rounded-full shadow-lg">
+                <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold shadow-lg">
                   Popular
-                </div>
+                </Badge>
               )}
 
               <div className="flex items-center space-x-4">
@@ -157,9 +169,9 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
                   "group-hover:shadow-lg group-hover:scale-110"
                 )}>
                   {isLoading ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
                   ) : (
-                    <span>{walletOption.icon}</span>
+                    <walletOption.icon className="w-6 h-6 text-white" />
                   )}
                 </div>
 
@@ -187,17 +199,13 @@ export function WalletSelection({ onWalletSelect, connected, className }: Wallet
                 <div className="flex-shrink-0">
                   {isConnectedToThis ? (
                     <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Check className="w-4 h-4 text-white" />
                     </div>
                   ) : isLoading ? (
-                    <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                   ) : (
                     <div className="w-8 h-8 border-2 border-gray-300 dark:border-gray-600 rounded-full flex items-center justify-center group-hover:border-gray-400">
-                      <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
                     </div>
                   )}
                 </div>
