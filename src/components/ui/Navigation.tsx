@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, User, Link2, LogOut, Loader2, Mail } from 'lucide-react';
+import { Briefcase, User, Link2, LogOut, Loader2, Mail, Zap } from 'lucide-react';
 
 export function Navigation() {
   const { session, userProfile, login, logout, loading, isAuthorized } = useAuth();
@@ -26,6 +26,10 @@ export function Navigation() {
           <Button onClick={() => router.push('/')} variant="secondary" className="hidden sm:flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             All Projects
+          </Button>
+          <Button onClick={() => router.push('/opportunities')} variant="secondary" className="hidden sm:flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            Opportunities
           </Button>
           <Button onClick={() => router.push('/profile')} variant="secondary" className="hidden sm:flex items-center gap-2">
             <User className="w-4 h-4" />

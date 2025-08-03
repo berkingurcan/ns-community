@@ -137,28 +137,15 @@ export default function ProfilePage() {
     }
   };
 
-  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleExpertiseToggle = (expertise: string) => {
-    setFormData(prev => ({
-      ...prev,
-      expertises: prev.expertises.includes(expertise)
-        ? prev.expertises.filter(e => e !== expertise)
-        : [...prev.expertises, expertise]
-    }));
-  };
-
-  const handleSave = async () => {
-    if (!userProfile) {
-      alert('No profile found to update');
+  const handleProfileSave = async (data: ProfileFormData) => {
+    if (!userProfile || !session?.user?.id) {
+      toast.error('Authentication required');
       return;
     }
 
-    const validationError = validateProfileForm(formData);
+    const validationError = validateProfileForm(data);
     if (validationError) {
-      alert(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -167,65 +154,26 @@ export default function ProfilePage() {
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          username: formData.username,
-          discord_id: formData.discordId,
-          shill_yourself: formData.shillYourself,
-          expertises: formData.expertises,
-          github: formData.github || null,
-          x_handle: formData.xHandle || null,
+          username: data.username,
+          discord_id: data.discordId,
+          shill_yourself: data.shillYourself,
+          expertises: data.expertises,
+          github: data.github || null,
+          x_handle: data.xHandle || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', userProfile.id);
 
       if (error) throw error;
       
-      // Refresh the profile data
+      toast.success('Profile updated successfully! ✨');
       await refreshProfile();
-      setIsEditing(false);
-      alert('Profile updated successfully!');
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert(`Failed to update profile: ${error.message}`);
+      toast.error(`Failed to update profile: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    if (userProfile) {
-      setFormData({
-        username: userProfile.username || '',
-        discordId: userProfile.discord_id || '',
-        shillYourself: userProfile.shill_yourself || '',
-        expertises: Array.isArray(userProfile.expertises) ? userProfile.expertises : [],
-        github: userProfile.github || '',
-        xHandle: userProfile.x_handle || ''
-      });
-    }
-    setIsEditing(false);
-  };
-
-  const handleAutoFillFromDiscord = () => {
-    if (!session?.user) {
-      alert('No Discord session found');
-      return;
-    }
-
-    console.log('🔍 Auto-filling from Discord data...');
-    const discordProfile = extractProfileFromDiscord(session.user);
-    
-    setFormData(prev => ({
-      ...prev,
-      // Sadece boş olan alanları doldur
-      username: prev.username || discordProfile.username || prev.username,
-      discordId: prev.discordId || discordProfile.discordId || prev.discordId,
-      shillYourself: prev.shillYourself || discordProfile.shillYourself || prev.shillYourself,
-      github: prev.github || discordProfile.github || prev.github,
-      xHandle: prev.xHandle || discordProfile.xHandle || prev.xHandle,
-      // expertises korunur
-    }));
-
-    alert('Discord bilgileri yüklendi! Boş olan alanlar dolduruldu.');
   };
 
   // Carousel navigation
@@ -275,9 +223,17 @@ export default function ProfilePage() {
               {/* Avatar & User Info - Centered Layout */}
               <div className="flex items-center gap-6">
                 <div className="relative -mt-16">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center text-primary-foreground text-4xl font-bold shadow-xl border-4 border-background">
-                    {userProfile.username?.charAt(0).toUpperCase() || 'U'}
-                  </div>
+                  {session?.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={`${userProfile.username}'s profile`}
+                      className="w-32 h-32 rounded-full shadow-xl border-4 border-background object-cover"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center text-primary-foreground text-4xl font-bold shadow-xl border-4 border-background">
+                      {userProfile.username?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
                   <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-green-500 rounded-full border-4 border-background flex items-center justify-center">
                     <div className="w-4 h-4 bg-white rounded-full"></div>
                   </div>
@@ -331,33 +287,15 @@ export default function ProfilePage() {
 
               {/* Action Buttons */}
               <div className="flex gap-2 pb-2">
-                {!isEditing ? (
-                  <>
-                    <Button onClick={() => router.push('/projects')} className="shadow-lg">
-                      <Plus className="w-4 h-4 mr-2" /> Create Project
-                    </Button>
-                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button onClick={refreshProfile} variant="outline" size="sm">
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button onClick={handleSave} disabled={isLoading} className="shadow-lg">
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                      Save
-                    </Button>
-                    <Button onClick={handleAutoFillFromDiscord} variant="secondary" size="sm">
-                      <Download className="w-4 h-4 mr-1" />
-                      Discord
-                    </Button>
-                    <Button onClick={handleCancel} variant="outline">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </>
-                )}
+                <Button onClick={() => router.push('/projects')} className="shadow-lg">
+                  <Plus className="w-4 h-4 mr-2" /> Create Project
+                </Button>
+                <Button onClick={() => setShowProfileEdit(true)} variant="outline" size="sm">
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button onClick={refreshProfile} variant="outline" size="sm">
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -377,38 +315,13 @@ export default function ProfilePage() {
                   <User className="w-4 h-4" />
                   About Me
                 </h3>
-                {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Username *</label>
-                      <input
-                        type="text"
-                        value={formData.username}
-                        onChange={(e) => handleInputChange('username', e.target.value)}
-                        className="w-full mt-1 p-3 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Bio *</label>
-                      <textarea
-                        value={formData.shillYourself}
-                        onChange={(e) => handleInputChange('shillYourself', e.target.value)}
-                        className="w-full mt-1 p-3 bg-background border border-input rounded-lg min-h-[100px] focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-                        placeholder="Tell us about yourself..."
-                        required
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-foreground leading-relaxed">
-                      {userProfile.shill_yourself || (
-                        <span className="text-muted-foreground italic">No bio yet...</span>
-                      )}
-                    </p>
-                  </div>
-                )}
+                <div className="space-y-3">
+                  <p className="text-foreground leading-relaxed">
+                    {userProfile.shill_yourself || (
+                      <span className="text-muted-foreground italic">No bio yet...</span>
+                    )}
+                  </p>
+                </div>
               </div>
 
 
@@ -419,52 +332,27 @@ export default function ProfilePage() {
                   <Zap className="w-4 h-4" />
                   Expertises
                 </h3>
-                {isEditing ? (
-                  <div className="grid grid-cols-1 gap-2">
-                    {EXPERTISE_OPTIONS.map((expertise) => (
-                      <button
+                <div className="space-y-2">
+                  {userProfile.expertises && userProfile.expertises.length > 0 ? (
+                    userProfile.expertises.map((expertise) => (
+                      <div
                         key={expertise}
-                        type="button"
-                        onClick={() => handleExpertiseToggle(expertise)}
-                        className={`p-2 rounded-lg border text-left text-sm transition-all ${
-                          formData.expertises.includes(expertise)
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background border-input hover:border-primary/50 hover:bg-primary/5'
-                        }`}
+                        className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg"
                       >
-                        {expertise}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {userProfile.expertises && userProfile.expertises.length > 0 ? (
-                      userProfile.expertises.map((expertise) => (
-                        <div
-                          key={expertise}
-                          className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg"
-                        >
-                          <Zap className="w-3 h-3 text-primary" />
-                          <span className="text-sm font-medium">{expertise}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground italic text-sm">No expertises selected yet...</p>
-                    )}
-                  </div>
-                )}
+                        <Zap className="w-3 h-3 text-primary" />
+                        <span className="text-sm font-medium">{expertise}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground italic text-sm">No expertises selected yet...</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Side - Projects */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-6">
-              <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
-                <Briefcase className="w-5 h-5" />
-                Projects
-              </h2>
-            </div>
 
               {projectsLoading ? (
                 <div className="flex justify-center py-12">
@@ -492,6 +380,7 @@ export default function ProfilePage() {
                         project={project}
                         canEdit={true}
                         currentUserId={userProfile?.id}
+                        hasDiscordRole={true} // NS user is logged in, so they have Discord role
                         onEdit={handleEdit}
                         onQuickEdit={handleQuickEdit}
                         onEditMore={() => handleEditMore(project)}
@@ -562,6 +451,15 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        isOpen={showProfileEdit}
+        onClose={() => setShowProfileEdit(false)}
+        onSave={handleProfileSave}
+        userProfile={userProfile}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

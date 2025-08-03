@@ -101,6 +101,7 @@ export default function MyProjectsPage() {
               project={project}
               canEdit={true}
               currentUserId={userProfile?.id}
+              hasDiscordRole={true} // User is logged in, so they have Discord role
               onQuickEdit={handleQuickEdit}
             />
           ))}

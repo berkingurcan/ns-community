@@ -6,8 +6,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ProfileFormData, EXPERTISE_OPTIONS, UserProfile } from '@/types/profile';
-import { Save, X, User, Github, Twitter, Zap } from 'lucide-react';
+import { ProfileFormData, EXPERTISE_OPTIONS, UserProfile, extractProfileFromDiscord } from '@/types/profile';
+import { Save, X, User, Github, Twitter, Zap, Download, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ export function ProfileEditModal({
   userProfile,
   isLoading
 }: ProfileEditModalProps) {
+  const { session } = useAuth();
   const [formData, setFormData] = useState<ProfileFormData>({
     username: '',
     discordId: '',
@@ -32,6 +35,7 @@ export function ProfileEditModal({
     github: '',
     xHandle: ''
   });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (userProfile) {
@@ -45,6 +49,36 @@ export function ProfileEditModal({
       });
     }
   }, [userProfile]);
+
+  const handleAutoFillFromDiscord = () => {
+    if (!session?.user) {
+      toast.error('No Discord session found');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const discordProfile = extractProfileFromDiscord(session.user);
+      
+      setFormData(prev => ({
+        ...prev,
+        // Only fill empty fields
+        username: prev.username || discordProfile.username || prev.username,
+        discordId: prev.discordId || discordProfile.discordId || prev.discordId,
+        shillYourself: prev.shillYourself || discordProfile.shillYourself || prev.shillYourself,
+        github: prev.github || discordProfile.github || prev.github,
+        xHandle: prev.xHandle || discordProfile.xHandle || prev.xHandle,
+        // Keep existing expertises
+      }));
+
+      toast.success('Discord data synced! Empty fields were filled.');
+    } catch (error) {
+      console.error('Discord sync error:', error);
+      toast.error('Failed to sync Discord data');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleInputChange = (field: keyof ProfileFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -82,82 +116,109 @@ export function ProfileEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
             Edit Profile
           </DialogTitle>
+          {/* Discord Sync Button */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAutoFillFromDiscord}
+            disabled={isSyncing || isLoading}
+            className="shrink-0"
+          >
+            {isSyncing ? (
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Sync Discord
+          </Button>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Basic Info */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Basic Information</h3>
-              
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Profile Picture & Basic Info */}
+          <div className="flex gap-4">
+            {/* Discord Avatar */}
+            <div className="flex-shrink-0">
+              {session?.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt="Discord Avatar"
+                  className="w-16 h-16 rounded-full border-2 border-border"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+              )}
+            </div>
+            
+            {/* Basic Fields */}
+            <div className="flex-1 space-y-3">
               <div>
-                <Label htmlFor="username">Username *</Label>
+                <Label htmlFor="username" className="text-sm">Username *</Label>
                 <Input
                   id="username"
                   type="text"
                   value={formData.username}
                   onChange={(e) => handleInputChange('username', e.target.value)}
                   required
+                  className="mt-1"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="bio">Bio *</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.shillYourself}
-                  onChange={(e) => handleInputChange('shillYourself', e.target.value)}
-                  placeholder="Tell us about yourself..."
-                  className="min-h-[100px] resize-none"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground flex items-center gap-2">
-                <Github className="w-4 h-4" />
-                Social Links
-              </h3>
-              
-              <div>
-                <Label htmlFor="github">GitHub Username</Label>
-                <Input
-                  id="github"
-                  type="text"
-                  value={formData.github}
-                  onChange={(e) => handleInputChange('github', e.target.value)}
-                  placeholder="your-github-username"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="twitter">X (Twitter) Handle</Label>
-                <Input
-                  id="twitter"
-                  type="text"
-                  value={formData.xHandle}
-                  onChange={(e) => handleInputChange('xHandle', e.target.value)}
-                  placeholder="your-twitter-handle"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="github" className="text-sm">GitHub</Label>
+                  <Input
+                    id="github"
+                    type="text"
+                    value={formData.github}
+                    onChange={(e) => handleInputChange('github', e.target.value)}
+                    placeholder="username"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="twitter" className="text-sm">X (Twitter)</Label>
+                  <Input
+                    id="twitter"
+                    type="text"
+                    value={formData.xHandle}
+                    onChange={(e) => handleInputChange('xHandle', e.target.value)}
+                    placeholder="handle"
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Bio */}
+          <div>
+            <Label htmlFor="bio" className="text-sm">Bio *</Label>
+            <Textarea
+              id="bio"
+              value={formData.shillYourself}
+              onChange={(e) => handleInputChange('shillYourself', e.target.value)}
+              placeholder="Tell us about yourself..."
+              className="mt-1 min-h-[80px] resize-none"
+              required
+            />
+          </div>
+
           {/* Expertises */}
           <div>
-            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+            <Label className="text-sm flex items-center gap-2 mb-3">
               <Zap className="w-4 h-4" />
               Expertises
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
               {EXPERTISE_OPTIONS.map((expertise) => {
                 const isSelected = formData.expertises.includes(expertise);
                 return (
@@ -165,7 +226,7 @@ export function ProfileEditModal({
                     key={expertise}
                     type="button"
                     onClick={() => handleExpertiseToggle(expertise)}
-                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                    className={`p-2 rounded-md border text-xs font-medium transition-all text-left ${
                       isSelected
                         ? 'bg-primary text-primary-foreground border-primary'
                         : 'bg-background border-input hover:border-primary/50 hover:bg-primary/5'
@@ -179,11 +240,11 @@ export function ProfileEditModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button type="submit" disabled={isLoading} className="flex-1">
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" disabled={isLoading || isSyncing} className="flex-1">
               {isLoading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
                   Saving...
                 </>
               ) : (
@@ -193,7 +254,7 @@ export function ProfileEditModal({
                 </>
               )}
             </Button>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading || isSyncing}>
               <X className="w-4 h-4 mr-2" />
               Cancel
             </Button>

@@ -393,6 +393,7 @@ const CollaborationDemoPage = () => {
               canEdit={project.user_id === userProfile.id}
               canRequestCollaboration={project.user_id !== userProfile.id}
               currentUserId={userProfile.id}
+              hasDiscordRole={true} // Demo page - assume user has Discord role
               onRequestCollaboration={() => openCollaborationModal(project)}
               onQuickEdit={handleQuickEdit}
             />

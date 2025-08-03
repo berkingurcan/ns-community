@@ -114,7 +114,12 @@ export default function HomePage() {
         {/* Projects Grid */}
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard 
+              key={project.id} 
+              project={project}
+              hasDiscordRole={isAuthorized} // If user is authorized, they have Discord role
+              currentUserId={userProfile?.id}
+            />
           ))}
         </div>
         {/* Pagination etc. */}
