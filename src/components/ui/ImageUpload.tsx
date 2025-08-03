@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button } from './Button';
+import { Button } from './button';
 import { ImageUploadService } from '@/lib/imageUpload';
 
 interface ImageUploadProps {
@@ -193,7 +193,7 @@ export function ImageUpload({
           <img
             src={previewUrl}
             alt="Project logo preview"
-            className="w-32 h-32 object-cover rounded-lg border-2 border-border"
+            className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
           />
           {!isUploading && !isLoading && (
             <button
@@ -221,7 +221,7 @@ export function ImageUpload({
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             isDragOver
               ? 'border-primary bg-primary/5'
-              : 'border-border hover:border-primary/50'
+              : 'border-gray-200 dark:border-gray-700 hover:border-primary/50'
           }`}
         >
           <div className="space-y-4">
