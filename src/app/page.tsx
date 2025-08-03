@@ -90,12 +90,24 @@ export default function HomePage() {
       console.log('🏠 HomePage: 🔄 Session exists but no profile - showing onboarding in modal');
       setIsAuthenticated(false);
       setShowLoginModal(true); // Ensure modal is open to show onboarding form
+    } else if (session && hasProfile === null) {
+      // Session exists but profile check is stuck - add timeout
+      console.log('🏠 HomePage: ⏳ Session exists but hasProfile is null - profile check might be stuck');
+      setIsAuthenticated(false);
+      
+      // Add a timeout to force profile check if stuck
+      const timeout = setTimeout(() => {
+        console.log('🏠 HomePage: ⚠️ Profile check timeout - forcing recheck');
+        checkUserProfile();
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
     } else {
-      // No session or hasProfile is still null (loading)
-      console.log('🏠 HomePage: ⏳ No session or hasProfile is null - showing login form');
+      // No session
+      console.log('🏠 HomePage: ⏳ No session - showing login form');
       setIsAuthenticated(false);
     }
-  }, [session, hasProfile, router]);
+  }, [session, hasProfile, router, checkUserProfile]);
 
   const loadProjects = useCallback(async (page: number) => {
     setIsLoading(true);
@@ -715,17 +727,30 @@ export default function HomePage() {
                     </div>
                   </form>
                 </div>
-              ) : (
+              ) : session ? (
                 <div className="text-center space-y-8">
                   <CheckCircle2 className="mx-auto h-16 w-16 text-primary" />
                   <div className="space-y-4">
                     <h2 className="text-3xl font-bold">Welcome! 🎉</h2>
                     <p className="text-muted-foreground text-lg">
-                      Loading your project hub...
+                      {hasProfile === null ? 'Checking your profile...' : 'Loading your project hub...'}
                     </p>
+                    {hasProfile === null && (
+                      <Button 
+                        onClick={() => {
+                          console.log('Force checking profile...');
+                          checkUserProfile();
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="mt-4"
+                      >
+                        Refresh
+                      </Button>
+                    )}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           </Card>
         </div>
