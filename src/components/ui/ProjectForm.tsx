@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ImageUpload } from './ImageUpload';
-import { CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS, Project } from '@/types/project';
+import { CreateProjectData, UpdateProjectData, Project } from '@/types/project';
 import { Plus, X, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -221,7 +221,7 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
                             name="status"
                             value={status}
                             checked={formData.status === status}
-                            onChange={(e) => handleInputChange('status', e.target.value as any)}
+                            onChange={(e) => handleInputChange('status', e.target.value as 'open' | 'in-progress' | 'completed')}
                         />
                         {status}
                     </Label>

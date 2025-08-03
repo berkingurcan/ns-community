@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { CoinService } from '@/lib/coins';
 import { CoinTransaction, COIN_CONFIG, COIN_TRANSACTION_LABELS, COIN_TRANSACTION_COLORS } from '@/types/coin';
@@ -31,11 +31,7 @@ const CoinsPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadTransactions();
-  }, [userProfile]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     if (!userProfile) return;
     
     try {
@@ -47,7 +43,11 @@ const CoinsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userProfile]);
+
+  useEffect(() => {
+    loadTransactions();
+  }, [userProfile, loadTransactions]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -96,11 +96,11 @@ const CoinsPage = () => {
             </h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            <strong className="text-amber-600">Every collaboration = 1 coin.</strong> Like John Wick's Continental Hotel - 
+            <strong className="text-amber-600">Every collaboration = 1 coin.</strong> Like John Wick&apos;s Continental Hotel - 
             sacred, valuable, and non-negotiable. No matter the complexity, every favor earns exactly one coin.
           </p>
           <p className="text-sm text-muted-foreground mt-2 italic">
-            "The Continental. Neutral ground. And every service... has its price." - 1 Coin
+            &quot;The Continental. Neutral ground. And every service... has its price.&quot; - 1 Coin
           </p>
         </div>
 
@@ -207,7 +207,7 @@ const CoinsPage = () => {
                   <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-amber-600">1</span>
                   </div>
-                  <p>Post your project on the <strong>Opportunities</strong> page and mark it as "Open for Collaboration"</p>
+                  <p>Post your project on the <strong>Opportunities</strong> page and mark it as &quot;Open for Collaboration&quot;</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -219,19 +219,19 @@ const CoinsPage = () => {
                   <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-amber-600">3</span>
                   </div>
-                  <p>When you accept someone's help, <strong className="text-amber-600">exactly 1 Continental Coin</strong> is automatically transferred from you to them</p>
+                  <p>When you accept someone&apos;s help, <strong className="text-amber-600">exactly 1 Continental Coin</strong> is automatically transferred from you to them</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-amber-600">4</span>
                   </div>
-                  <p>The sacred transaction is complete. Honor demands payment. The Continental's rules are absolute.</p>
+                  <p>The sacred transaction is complete. Honor demands payment. The Continental&apos;s rules are absolute.</p>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/20 rounded border border-amber-300 dark:border-amber-700">
                 <p className="text-xs text-amber-800 dark:text-amber-200 italic font-medium">
-                  "No matter the favor, no matter the complexity - every service rendered at the Continental is worth exactly one coin. 
-                  This is the way." - The Manager
+                  &quot;No matter the favor, no matter the complexity - every service rendered at the Continental is worth exactly one coin. 
+                  This is the way.&quot; - The Manager
                 </p>
               </div>
             </div>

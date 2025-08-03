@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -156,7 +156,7 @@ export function CollaborationSidebar({
                 <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
                 <h3 className="font-medium mb-2">No collaboration requests</h3>
                 <p className="text-sm text-muted-foreground">
-                  When people request to collaborate on your projects, they'll appear here.
+                  When people request to collaborate on your projects, they&apos;ll appear here.
                 </p>
               </div>
             ) : (
@@ -225,7 +225,7 @@ interface RequestCardProps {
   onAccept?: () => void;
   onDeny?: () => void;
   onArchive?: () => void;
-  getCollaborationType: (typeId: CollaborationType) => any;
+  getCollaborationType: (typeId: CollaborationType) => { label: string; icon: React.ComponentType };
   isAccepted?: boolean;
 }
 
@@ -272,7 +272,7 @@ function RequestCard({
 
       {/* Message */}
       <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-        "{request.intro_message}"
+        &quot;{request.intro_message}&quot;
       </p>
 
       {/* Discord Info */}

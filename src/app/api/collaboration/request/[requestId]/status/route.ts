@@ -3,10 +3,11 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { requestId: string } }
+  { params }: { params: Promise<{ requestId: string }> }
 ) {
+  const { requestId } = await params;
   try {
-    const { requestId } = params;
+
     const { status } = await request.json();
 
     // Get the authenticated user from the session
@@ -92,10 +93,13 @@ export async function PATCH(
     }
 
     // Start a transaction to update both the request status and potentially add collaborator
-    const updates = [];
 
     // Update the collaboration request status
-    const updateData: any = {
+    const updateData: {
+      status: string;
+      updated_at: string;
+      archived_at?: string;
+    } = {
       status,
       updated_at: new Date().toISOString()
     };

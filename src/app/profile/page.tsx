@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
@@ -10,12 +10,11 @@ import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { ProjectForm } from '@/components/ui/ProjectForm';
 import { ProfileEditModal } from '@/components/ui/ProfileEditModal';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Briefcase, Edit, Save, X, Loader2, RefreshCw, Download, User, Github, Twitter, Zap, ChevronLeft, ChevronRight, Plus, Coins, TrendingUp, History, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
-import { ProfileFormData, EXPERTISE_OPTIONS, validateProfileForm, extractProfileFromDiscord } from '@/types/profile';
+import { Briefcase, Edit, Loader2, RefreshCw, User, ChevronLeft, ChevronRight, Plus, Coins, History, ArrowUpRight, ArrowDownLeft, Github, Twitter, Zap } from 'lucide-react';
+import Image from 'next/image';
+import { ProfileFormData } from '@/types/profile';
 import { Project, UpdateProjectData } from '@/types/project';
-import { CoinTransaction, COIN_TRANSACTION_LABELS, COIN_TRANSACTION_COLORS } from '@/types/coin';
+import { CoinTransaction, COIN_TRANSACTION_LABELS } from '@/types/coin';
 import { toast } from 'sonner';
 
 export default function ProfilePage() {
@@ -35,7 +34,7 @@ export default function ProfilePage() {
   const projectsPerPage = 3;
 
   // Load user projects
-  const loadUserProjects = async () => {
+  const loadUserProjects = useCallback(async () => {
     if (!userProfile?.id) return;
     
     setProjectsLoading(true);
@@ -47,10 +46,10 @@ export default function ProfilePage() {
     } finally {
       setProjectsLoading(false);
     }
-  };
+  }, [userProfile]);
 
   // Load recent coin transactions
-  const loadRecentTransactions = async () => {
+  const loadRecentTransactions = useCallback(async () => {
     if (!userProfile?.id) return;
     
     try {
@@ -59,7 +58,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error loading recent transactions:', error);
     }
-  };
+  }, [userProfile]);
 
   // Load projects and transactions when userProfile is available
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function ProfilePage() {
       loadUserProjects();
       loadRecentTransactions();
     }
-  }, [userProfile]);
+  }, [userProfile, loadUserProjects, loadRecentTransactions]);
 
   useEffect(() => {
     if (!session) {
@@ -188,9 +187,9 @@ export default function ProfilePage() {
       
       toast.success('Profile updated successfully! ✨');
       await refreshProfile();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
-      toast.error(`Failed to update profile: ${error.message}`);
+      toast.error(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -256,9 +255,11 @@ export default function ProfilePage() {
               <div className="flex items-center gap-6">
                 <div className="relative -mt-16">
                   {session?.user?.image ? (
-                    <img
+                    <Image
                       src={session.user.image}
-                      alt={`${userProfile.username}'s profile`}
+                      alt={`${userProfile.username}&apos;s profile`}
+                      width={128}
+                      height={128}
                       className="w-32 h-32 rounded-full shadow-xl border-4 border-background object-cover"
                     />
                   ) : (

@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -146,9 +148,11 @@ export function ProfileEditModal({
             {/* Discord Avatar */}
             <div className="flex-shrink-0">
               {session?.user?.image ? (
-                <img
+                <Image
                   src={session.user.image}
                   alt="Discord Avatar"
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full border-2 border-border"
                 />
               ) : (

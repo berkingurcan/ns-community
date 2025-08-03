@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+
 import { Label } from '@/components/ui/label';
 import { 
   Project, 
@@ -80,9 +80,7 @@ export function CollaborationRequestModal({
     onClose();
   };
 
-  const getTypeInfo = (typeId: CollaborationType) => {
-    return COLLABORATION_TYPES.find(t => t.id === typeId);
-  };
+
 
   if (!userProfile?.discord_username) {
     return (

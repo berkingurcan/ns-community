@@ -54,7 +54,7 @@ function OpportunitiesPage() {
           title: 'DeFi Portfolio Tracker',
           description: 'A comprehensive DeFi portfolio management tool with real-time analytics, yield farming tracking, and automated rebalancing. Built with React, Node.js, and Web3 integration. Looking for blockchain developers and UI/UX designers to join the team.',
           user_id: 'user-alex-crypto',
-          categories: ['defi', 'web3', 'analytics'],
+          categories: ['defi', 'web3-dapp', 'analytics'],
           category: 'defi',
           tags: ['React', 'Node.js', 'Web3.js', 'Solidity', 'PostgreSQL'],
           collaboration_status: 'open',
@@ -345,7 +345,7 @@ function OpportunitiesPage() {
                         key={key}
                         variant={timeFilter === key ? 'default' : 'ghost'}
                         size="sm"
-                        onClick={() => setTimeFilter(key as any)}
+                        onClick={() => setTimeFilter(key as 'all' | 'today' | 'week' | 'month')}
                         className={`w-full justify-start text-xs ${
                           timeFilter === key 
                             ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-black/90 dark:hover:bg-white/90' 

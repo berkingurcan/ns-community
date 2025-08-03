@@ -5,13 +5,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+
 import { Label } from '@/components/ui/label';
 import { 
   Project, 
@@ -30,7 +27,7 @@ import {
   Users, 
   Eye, 
   UserPlus,
-  CheckCircle,
+
   Zap,
   Rocket,
   Lock,
@@ -66,10 +63,7 @@ import {
   Shield,
   Brain,
   UserX,
-  Github,
-  Twitter,
-  ExternalLink,
-  ChevronDown,
+
   Plus,
   X,
   Edit3
@@ -157,15 +151,7 @@ export function QuickEditModal({
     onClose();
   };
 
-  const getStatusColor = (status: Project['status']) => {
-    switch (status) {
-      case 'showcase': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'NS-Only': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      case 'Archive': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-      case 'Draft': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-    }
-  };
+
 
   const getStatusIcon = (status: Project['status']) => {
     switch (status) {
@@ -178,7 +164,7 @@ export function QuickEditModal({
   };
 
   const getCategoryIcon = (categoryId: ProjectCategory) => {
-    const iconMap: Record<ProjectCategory, any> = {
+    const iconMap: Record<ProjectCategory, React.ComponentType> = {
       'web3-dapp': Globe,
       'defi': DollarSign,
       'nft': Image,
@@ -202,7 +188,7 @@ export function QuickEditModal({
   };
 
   const getCollaborationIcon = (typeId: CollaborationType) => {
-    const iconMap: Record<CollaborationType, any> = {
+    const iconMap: Record<CollaborationType, React.ComponentType> = {
       'frontend-dev': Monitor,
       'backend-dev': Server,
       'blockchain-dev': Blocks,
@@ -234,7 +220,7 @@ export function QuickEditModal({
 
   const getDisplayCategories = () => {
     return showAllCategories ? PROJECT_CATEGORIES : PROJECT_CATEGORIES.filter(cat => 
-      POPULAR_CATEGORIES.includes(cat.id as any)
+      POPULAR_CATEGORIES.includes(cat.id as ProjectCategory)
     );
   };
 

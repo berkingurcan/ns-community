@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Profile creation timeout')), 5000)
       );
       
-      const { data, error } = await Promise.race([insertQuery, insertTimeout]) as any;
+      const { data, error } = await Promise.race([insertQuery, insertTimeout]) as { data: unknown; error: unknown };
 
       if (error) {
         if (error.message === 'Profile creation timeout') {
@@ -184,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Database query timeout')), 5000)
       );
       
-      const { data, error } = await Promise.race([profileQuery, queryTimeout]) as any;
+      const { data, error } = await Promise.race([profileQuery, queryTimeout]) as { data: unknown; error: unknown };
 
       if (error) {
         if (error.message === 'Database query timeout') {
@@ -326,7 +326,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setTimeout(() => reject(new Error('Session fetch timeout')), 4000);
           });
           
-          const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as { data: { session: unknown }; error: unknown };
           console.log('Initial session:', session);
           console.log('Initial session error:', error);
           

@@ -1,9 +1,7 @@
 import { 
   CoinTransaction, 
   CoinTransferRequest, 
-  UserCoinBalance, 
-  CoinTransactionType,
-  COIN_CONFIG 
+  UserCoinBalance
 } from '@/types/coin';
 import { supabase } from '@/lib/supabaseClient';
 

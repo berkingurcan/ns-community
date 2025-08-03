@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ProjectService } from '@/lib/projects';
 import { Project } from '@/types/project';
@@ -15,7 +15,7 @@ export default function MyProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     if (!userProfile) return;
     
     setIsLoading(true);
@@ -28,13 +28,13 @@ export default function MyProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userProfile]);
 
   useEffect(() => {
     if (userProfile) {
       fetchProjects();
     }
-  }, [userProfile]);
+  }, [userProfile, fetchProjects]);
 
   const handleQuickEdit = async (projectId: string, updates: Partial<Project>) => {
     if (!userProfile) return;
@@ -88,7 +88,7 @@ export default function MyProjectsPage() {
       {projects.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-border rounded-2xl">
           <h2 className="text-2xl font-semibold mb-2">No projects yet</h2>
-          <p className="text-muted-foreground mb-4">You haven't created any projects. Start building something new!</p>
+          <p className="text-muted-foreground mb-4">You haven&apos;t created any projects. Start building something new!</p>
           <Button onClick={() => router.push('/projects?tab=create')}>
             Create Your First Project
           </Button>

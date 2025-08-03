@@ -157,7 +157,7 @@ export class CollaborationService {
   // Real-time subscription for collaboration requests
   static subscribeToCollaborationRequests(
     userId: string,
-    callback: (payload: any) => void
+    callback: (payload: { eventType: string; new: unknown; old?: unknown }) => void
   ) {
     return supabase
       .channel('collaboration_requests')

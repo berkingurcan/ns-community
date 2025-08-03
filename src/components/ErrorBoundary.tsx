@@ -111,7 +111,7 @@ export const useWalletErrorSuppression = () => {
 
     // Also suppress console errors from wallet extensions
     const originalConsoleError = console.error;
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       const message = args.join(' ');
       if (message.includes('chrome-extension://') ||
           message.includes('ethereum') ||

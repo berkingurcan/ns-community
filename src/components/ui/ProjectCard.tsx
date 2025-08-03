@@ -1,29 +1,23 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useState } from 'react';
-import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, COLLABORATION_STATUS, CreateCollaborationRequestData } from '@/types/project';
+import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, CreateCollaborationRequestData } from '@/types/project';
 import { Button } from '@/components/ui/Button';
-import { Badge, badgeVariants } from '@/components/ui/badge';
+
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
+  Card
 } from '@/components/ui/card';
 import { QuickEditModal } from '@/components/ui/QuickEditModal';
 import {
-  Tag,
-  Link2,
   Edit,
   Trash2,
-  Calendar,
   RefreshCw,
   Github,
   Twitter,
   ExternalLink,
-  Users,
   UserPlus,
-  Settings,
   Zap,
   StickyNote,
   Eye
@@ -42,16 +36,11 @@ interface ProjectCardProps {
   hasDiscordRole?: boolean; // For showing collaboration badges
 }
 
-import { VariantProps } from 'class-variance-authority';
+
 
 //... (rest of the imports)
 
-const statusVariantMap: Record<Project['status'], VariantProps<typeof badgeVariants>['variant']> = {
-  showcase: 'default',
-  'NS-Only': 'destructive',
-  Archive: 'outline',
-  Draft: 'secondary',
-};
+
 
 export function ProjectCard({ 
   project, 
@@ -66,23 +55,14 @@ export function ProjectCard({
   hasDiscordRole = false
 }: ProjectCardProps) {
   const [showQuickEdit, setShowQuickEdit] = useState(false);
-  const getHost = (url: string | undefined | null) => {
-    if (!url) return '';
-    try {
-      return new URL(url).host;
-    } catch {
-      return url;
-    }
-  };
+
 
   // Helper functions for collaboration system
   const getProjectCategory = () => {
     return PROJECT_CATEGORIES.find(cat => cat.id === project.category);
   };
 
-  const getCollaborationStatus = () => {
-    return COLLABORATION_STATUS.find(status => status.id === project.collaboration_status);
-  };
+
 
   const getCollaborationTypes = () => {
     return project.looking_for_collaboration?.map(typeId => 
@@ -95,7 +75,6 @@ export function ProjectCard({
   const canShowCollaborationButton = !isOwnProject && canRequestCollaboration && isCollaborationOpen;
 
   const category = getProjectCategory();
-  const collaborationStatus = getCollaborationStatus();
   const lookingForTypes = getCollaborationTypes();
 
   return (
@@ -116,11 +95,13 @@ export function ProjectCard({
             {/* Project Avatar */}
             <div className="relative">
               {project.image_url ? (
-                <img
-                  src={project.image_url}
-                  alt={`${project.title} logo`}
-                  className="w-16 h-16 object-cover rounded-2xl shadow-lg ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300"
-                />
+                                  <Image
+                    src={project.image_url}
+                    alt={`${project.title} logo`}
+                    width={64}
+                    height={64}
+                    className="w-16 h-16 object-cover rounded-2xl shadow-lg ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300"
+                  />
               ) : (
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300">
                   <RefreshCw className="w-8 h-8 text-white" />

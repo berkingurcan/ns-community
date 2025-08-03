@@ -7,7 +7,7 @@ import { useWalletErrorSuppression } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { ProjectService } from '@/lib/projects';
-import { Project, EXPERTISE_OPTIONS } from '@/types/project';
+import { Project } from '@/types/project';
 import { Mail, Briefcase, User, LogOut } from 'lucide-react';
 
 export default function HomePage() {
@@ -18,13 +18,6 @@ export default function HomePage() {
   useWalletErrorSuppression();
   
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalProjects, setTotalProjects] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedExpertise, setSelectedExpertise] = useState<string>('');
 
   const projectsPerPage = 9;
   

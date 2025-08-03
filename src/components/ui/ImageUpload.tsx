@@ -1,5 +1,7 @@
 'use client';
 
+import NextImage from 'next/image';
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Label } from '@/components/ui/label';
@@ -215,9 +217,11 @@ export function ImageUpload({
       {/* Image Preview */}
       {previewUrl && (
         <div className="relative inline-block">
-          <img
+          <NextImage
             src={previewUrl}
             alt="Project logo preview"
+            width={128}
+            height={128}
             className="w-32 h-32 object-cover rounded-lg border-2 border-border"
           />
           {!isUploading && !isLoading && (
@@ -256,7 +260,7 @@ export function ImageUpload({
               className="space-y-4"
             >
               <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
-                <Image className="w-8 h-8" />
+                <Image className="w-8 h-8" alt="" />
               </div>
               <div>
                 <p className="text-sm text-foreground mb-1">

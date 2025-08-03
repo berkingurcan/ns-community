@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
@@ -13,7 +15,6 @@ import {
   Check, 
   X, 
   Clock,
-  Zap,
   Mail,
   Coins
 } from 'lucide-react';
@@ -257,9 +258,11 @@ export function CollaborationRequestsModal({
                         <div className="flex items-start gap-3">
                           {/* Applicant Avatar */}
                           {request.applicantImage ? (
-                            <img
+                            <Image
                               src={request.applicantImage}
-                              alt={request.applicantName}
+                              alt={request.applicantName || 'Applicant avatar'}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-full border-2 border-border"
                             />
                           ) : (
@@ -355,9 +358,11 @@ export function CollaborationRequestsModal({
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {request.applicantImage ? (
-                            <img
+                            <Image
                               src={request.applicantImage}
-                              alt={request.applicantName}
+                              alt={request.applicantName || 'Applicant avatar'}
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full border"
                             />
                           ) : (
@@ -396,7 +401,7 @@ export function CollaborationRequestsModal({
               </div>
               <h3 className="text-lg font-semibold mb-2">No collaboration requests</h3>
               <p className="text-muted-foreground text-sm">
-                When people apply to collaborate on your projects, they'll appear here.
+                When people apply to collaborate on your projects, they&apos;ll appear here.
               </p>
             </div>
           )}

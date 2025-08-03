@@ -15,9 +15,10 @@ import {
   CreateCollaborationRequestData,
   PROJECT_CATEGORIES,
   COLLABORATION_TYPES,
-  COLLABORATION_STATUS
+  ProjectCategory,
+  CollaborationType
 } from '@/types/project';
-import { CollaborationService } from '@/lib/collaborationService';
+
 import { toast } from 'sonner';
 import { 
   Users, 
@@ -25,8 +26,7 @@ import {
   Target, 
   MessageSquare, 
   Settings,
-  RefreshCw,
-  Bell
+  RefreshCw
 } from 'lucide-react';
 
 // Mock project data for demo
@@ -42,10 +42,9 @@ const createMockProjects = (userId: string): Project[] => [
     twitter_url: 'https://twitter.com/defidashboard',
     tags: ['DeFi', 'Analytics', 'React', 'TypeScript', 'Web3'],
     status: 'showcase',
-    category: 'defi',
+    categories: ['defi'] as ProjectCategory[],
     collaboration_status: 'open',
-    looking_for_collaboration: ['frontend-dev', 'ui-design', 'marketing'],
-    collaboration_description: 'Looking for talented developers to help scale our DeFi analytics platform!',
+    looking_for_collaboration: ['frontend-dev', 'ui-design', 'marketing'] as CollaborationType[],
     max_collaborators: 5,
     current_collaborators: 2,
     created_at: '2024-01-15T10:00:00Z',
@@ -62,10 +61,10 @@ const createMockProjects = (userId: string): Project[] => [
     twitter_url: '',
     tags: ['NFT', 'Marketplace', 'Solidity', 'Next.js', 'IPFS'],
     status: 'showcase',
-    category: 'nft',
-    collaboration_status: 'selective',
+    categories: ['nft'] as ProjectCategory[],
+    collaboration_status: 'open',
     looking_for_collaboration: ['blockchain-dev', 'security', 'ui-design'],
-    collaboration_description: 'Seeking experienced Solidity developers and security auditors.',
+    // collaboration_description: 'Seeking experienced Solidity developers and security auditors.',
     max_collaborators: 3,
     current_collaborators: 1,
     created_at: '2024-01-10T14:30:00Z',
@@ -82,10 +81,10 @@ const createMockProjects = (userId: string): Project[] => [
     twitter_url: 'https://twitter.com/daogovernance',
     tags: ['DAO', 'Governance', 'Voting', 'Treasury', 'Web3'],
     status: 'Draft',
-    category: 'dao',
+    categories: ['dao'] as ProjectCategory[],
     collaboration_status: 'open',
     looking_for_collaboration: ['product-mgmt', 'frontend-dev', 'community', 'tokenomics'],
-    collaboration_description: 'Building the future of DAO governance! Join our mission.',
+    // collaboration_description: 'Building the future of DAO governance! Join our mission.',
     max_collaborators: 5,
     current_collaborators: 0,
     created_at: '2024-01-12T09:15:00Z',
@@ -102,10 +101,10 @@ const createMockProjects = (userId: string): Project[] => [
     twitter_url: '',
     tags: ['Bridge', 'Cross-chain', 'DeFi', 'Security', 'Ethereum'],
     status: 'showcase',
-    category: 'bridge',
-    collaboration_status: 'team-full',
+    categories: ['bridge'] as ProjectCategory[],
+    collaboration_status: 'not-open',
     looking_for_collaboration: [],
-    collaboration_description: '',
+    // collaboration_description: '',
     max_collaborators: 4,
     current_collaborators: 4,
     created_at: '2024-01-08T16:45:00Z',
@@ -122,10 +121,10 @@ const createMockProjects = (userId: string): Project[] => [
     twitter_url: '',
     tags: ['AI/ML', 'Trading', 'Python', 'Data Analysis', 'Crypto'],
     status: 'NS-Only',
-    category: 'ai',
+    categories: ['ai'] as ProjectCategory[],
     collaboration_status: 'open',
     looking_for_collaboration: ['ai-ml', 'backend-dev', 'devops'],
-    collaboration_description: 'Looking for ML engineers and backend developers to optimize our trading algorithms.',
+    // collaboration_description: 'Looking for ML engineers and backend developers to optimize our trading algorithms.',
     max_collaborators: 3,
     current_collaborators: 1,
     created_at: '2024-01-05T11:20:00Z',
@@ -140,6 +139,7 @@ const CollaborationDemoPage = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
 
   useEffect(() => {
     if (userProfile) {
@@ -167,7 +167,7 @@ const CollaborationDemoPage = () => {
           id: userProfile?.id || '',
           username: userProfile?.username || 'You',
           avatar_url: userProfile?.avatar_url,
-          discord_username: userProfile?.discord_username
+          discord_username: userProfile?.discord_id
         },
         project: mockProjects.find(p => p.id === data.project_id) ? {
           id: data.project_id,
@@ -182,8 +182,6 @@ const CollaborationDemoPage = () => {
     } catch (error) {
       toast.error('Failed to send collaboration request');
       console.error('Request error:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -201,10 +199,8 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Collaboration request accepted! 🤝');
-    } catch (error) {
+    } catch {
       toast.error('Failed to accept request');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -222,10 +218,8 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Request declined');
-    } catch (error) {
+    } catch {
       toast.error('Failed to decline request');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -239,10 +233,8 @@ const CollaborationDemoPage = () => {
       );
       
       toast.success('Request archived');
-    } catch (error) {
+    } catch {
       toast.error('Failed to archive request');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -265,19 +257,15 @@ const CollaborationDemoPage = () => {
     } catch (error) {
       toast.error('Failed to update project');
       console.error('Quick edit error:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const openCollaborationModal = (project: Project) => {
-    setSelectedProject(project);
-  };
+
 
   const getCollaborationStats = () => {
     const totalProjects = mockProjects.length;
     const openForCollab = mockProjects.filter(p => 
-      p.collaboration_status === 'open' || p.collaboration_status === 'selective'
+              p.collaboration_status === 'open'
     ).length;
     const totalSpots = mockProjects.reduce((sum, p) => sum + (p.max_collaborators - p.current_collaborators), 0);
     
@@ -361,9 +349,9 @@ const CollaborationDemoPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><strong>1.</strong> <span className="text-purple-600 font-medium">Hover over your own projects</span> to see the "Quick Edit" button appear</p>
+            <p><strong>1.</strong> <span className="text-purple-600 font-medium">Hover over your own projects</span> to see the &quot;Quick Edit&quot; button appear</p>
             <p><strong>2.</strong> <span className="text-purple-600 font-medium">Quick Edit</span> your collaboration status, categories, and team settings instantly</p>
-            <p><strong>3.</strong> Click "Request to Join" on other projects to send collaboration requests</p>
+            <p><strong>3.</strong> Click &quot;Request to Join&quot; on other projects to send collaboration requests</p>
             <p><strong>4.</strong> Fill out the collaboration request modal with a 140-character intro</p>
             <p><strong>5.</strong> Click the notification bell (right side) to manage incoming requests</p>
             <p><strong>6.</strong> Accept, decline, or archive requests and watch real-time updates</p>
@@ -394,7 +382,7 @@ const CollaborationDemoPage = () => {
               canRequestCollaboration={project.user_id !== userProfile.id}
               currentUserId={userProfile.id}
               hasDiscordRole={true} // Demo page - assume user has Discord role
-              onRequestCollaboration={() => openCollaborationModal(project)}
+              onRequestCollaboration={handleRequestCollaboration}
               onQuickEdit={handleQuickEdit}
             />
           ))}

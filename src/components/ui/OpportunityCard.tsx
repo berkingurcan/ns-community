@@ -1,12 +1,14 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useState } from 'react';
 import { Project } from '@/types/project';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/badge';
+
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+
 import { 
   Github, 
   Twitter, 
@@ -96,9 +98,11 @@ export function OpportunityCard({ project, currentUserId, timeAgo, onApply, onCa
               {/* Project Avatar */}
               <div className="relative flex-shrink-0">
                 {project.image_url ? (
-                  <img
+                  <Image
                     src={project.image_url}
                     alt={`${project.title} logo`}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 object-cover rounded-xl shadow-md ring-2 ring-background group-hover:ring-primary/20 transition-all duration-300"
                   />
                 ) : (
@@ -374,9 +378,11 @@ export function OpportunityCard({ project, currentUserId, timeAgo, onApply, onCa
             <div className="bg-muted/50 rounded-lg p-3 border">
               <div className="flex items-center gap-2 mb-2">
                 {project.image_url ? (
-                  <img
+                  <Image
                     src={project.image_url}
                     alt={project.title}
+                    width={24}
+                    height={24}
                     className="w-6 h-6 object-cover rounded"
                   />
                 ) : (

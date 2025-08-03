@@ -4,10 +4,10 @@ import { supabase } from '@/lib/supabaseClient';
 // GET /api/projects/[projectId]/collaborators
 export async function GET(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Get project collaborators
     const { data: collaborators, error: collaboratorsError } = await supabase
@@ -45,10 +45,10 @@ export async function GET(
 // DELETE /api/projects/[projectId]/collaborators/[collaboratorId]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const { projectId } = params;
+    const { projectId } = await params;
     const url = new URL(request.url);
     const collaboratorId = url.searchParams.get('collaboratorId');
 
