@@ -209,3 +209,48 @@ export const POPULAR_CATEGORIES = [
   'developer-tools', 'wallet', 'bridge', 'social', 'marketplace',
   'analytics', 'education', 'ai', 'saas', 'enterprise', 'mobile', 'other'
 ] as const;
+
+// Icon mapping for lucide-react icons
+import { 
+  Globe, 
+  DollarSign, 
+  Image as ImageIcon, 
+  Gamepad2, 
+  Users, 
+  Link, 
+  Code, 
+  Wallet, 
+  ArrowRightLeft, 
+  MessageSquare, 
+  ShoppingCart, 
+  BarChart3, 
+  GraduationCap, 
+  Brain, 
+  Cloud, 
+  Building, 
+  Smartphone, 
+  HelpCircle 
+} from 'lucide-react';
+
+export const IconMap = {
+  Globe,
+  DollarSign,
+  Image: ImageIcon,
+  Gamepad2,
+  Users,
+  Link,
+  Code,
+  Wallet,
+  ArrowRightLeft,
+  MessageSquare,
+  ShoppingCart,
+  BarChart3,
+  GraduationCap,
+  Brain,
+  Cloud,
+  Building,
+  Smartphone,
+  HelpCircle
+} as const;
+
+export type IconName = keyof typeof IconMap;
