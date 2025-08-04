@@ -35,7 +35,7 @@ interface ProjectCardProps {
   canEdit?: boolean;
   canRequestCollaboration?: boolean;
   currentUserId?: string;
-  hasDiscordRole?: boolean; // For showing collaboration badges
+    hasDiscordRole?: boolean | null; // For showing collaboration badges
 }
 
 
