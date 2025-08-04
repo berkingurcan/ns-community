@@ -99,7 +99,7 @@ export default function ProfilePage() {
       console.error('Quick edit error:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
-        projectId: project.id
+                projectId: projectId
       });
       toast.error(
         error instanceof Error 
