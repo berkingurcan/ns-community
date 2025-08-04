@@ -16,7 +16,9 @@ import {
   PROJECT_CATEGORIES,
   COLLABORATION_TYPES,
   ProjectCategory,
-  CollaborationType
+  CollaborationType,
+  IconMap,
+  IconName
 } from '@/types/project';
 
 import { toast } from 'sonner';
@@ -397,11 +399,15 @@ const CollaborationDemoPage = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-2">
-                {PROJECT_CATEGORIES.slice(0, 8).map((category) => (
-                  <Badge key={category.id} variant="outline" className="justify-start">
-                    {category.emoji} {category.label}
-                  </Badge>
-                ))}
+                {PROJECT_CATEGORIES.slice(0, 8).map((category) => {
+                  const DynamicIcon = IconMap[category.icon as IconName];
+                  return (
+                    <Badge key={category.id} variant="outline" className="justify-start">
+                      {DynamicIcon && <DynamicIcon className="w-4 h-4 mr-1" />}
+                      {category.label}
+                    </Badge>
+                  );
+                })}
                 <Badge variant="secondary" className="justify-start">
                   +{PROJECT_CATEGORIES.length - 8} more...
                 </Badge>

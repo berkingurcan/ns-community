@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -63,7 +64,13 @@ export function Navigation() {
                   <span className="sr-only">User menu</span>
                   {/* Discord Avatar */}
                   {userProfile?.avatar_url ? (
-                    <img src={userProfile.avatar_url} alt={userProfile.username || 'Discord Avatar'} className="h-7 w-7 rounded-full" />
+                    <Image 
+                      src={userProfile.avatar_url} 
+                      alt={userProfile.username || 'Discord Avatar'} 
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 rounded-full" 
+                    />
                   ) : (
                     <div className="h-7 w-7 rounded-full bg-[#5865F2] flex items-center justify-center">
                       <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
