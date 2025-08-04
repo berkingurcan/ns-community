@@ -96,8 +96,16 @@ export default function ProfilePage() {
         )
       );
     } catch (error: unknown) {
-      console.error('Quick edit error:', error);
-      toast.error('Failed to update project');
+      console.error('Quick edit error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        projectId: project.id
+      });
+      toast.error(
+        error instanceof Error 
+          ? `Failed to update project: ${error.message}` 
+          : 'Failed to update project'
+      );
     }
   };
 

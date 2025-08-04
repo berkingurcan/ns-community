@@ -204,7 +204,14 @@ export class ProjectService {
       .single();
 
     if (error) {
-      console.error('Error quick updating project:', error);
+      console.error('Error quick updating project:', {
+        error,
+        projectId,
+        updates: cleanUpdates,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
       throw error;
     }
 
