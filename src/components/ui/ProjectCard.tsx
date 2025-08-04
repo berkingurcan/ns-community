@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, CreateCollaborationRequestData } from '@/types/project';
+import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, CreateCollaborationRequestData, IconMap, IconName } from '@/types/project';
 import { Button } from '@/components/ui/Button';
 
 import {
@@ -82,6 +82,11 @@ export function ProjectCard({
   const category = getProjectCategory();
   const lookingForTypes = getCollaborationTypes();
 
+  const CategoryIcon = ({ iconName }: { iconName: IconName }) => {
+    const Icon = IconMap[iconName];
+    return Icon ? <Icon className="w-4 h-4" /> : null;
+  };
+
   const handleMouseEnter = () => {
     if (iconRef.current) {
       const rect = iconRef.current.getBoundingClientRect();
@@ -154,7 +159,7 @@ export function ProjectCard({
               <div className="flex items-center flex-wrap gap-2">
                 {category && (
                   <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-full text-xs font-medium">
-                    <span className="text-base">{category.emoji}</span>
+                                        <CategoryIcon iconName={category.icon as IconName} />
                     <span className="text-muted-foreground">{category.label}</span>
                   </div>
                 )}
@@ -370,10 +375,10 @@ export function ProjectCard({
           <div className="leading-relaxed">
             Looking for: {lookingForTypes.map(type => type?.label).join(', ')}
           </div>
-          {project.notes_for_requests && (
+          {project.collaboration_description && (
             <div className="mt-2 pt-2 border-t border-gray-700 dark:border-gray-300">
               <div className="font-medium mb-1">Notes:</div>
-              <div className="leading-relaxed">{project.notes_for_requests}</div>
+              <div className="leading-relaxed">{project.collaboration_description}</div>
             </div>
           )}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
