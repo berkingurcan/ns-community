@@ -229,7 +229,21 @@ import {
   Cloud, 
   Building, 
   Smartphone, 
-  HelpCircle 
+  HelpCircle,
+  Laptop,
+  Settings,
+  Rocket,
+  Palette,
+  Paintbrush,
+  Ruler,
+  ClipboardList,
+  Megaphone,
+  Handshake,
+  Gem,
+  Lock,
+  Bot,
+  Feather,
+  Zap
 } from 'lucide-react';
 
 export const IconMap = {
@@ -250,7 +264,21 @@ export const IconMap = {
   Cloud,
   Building,
   Smartphone,
-  HelpCircle
+  HelpCircle,
+  Laptop,
+  Settings,
+  Rocket,
+  Palette,
+  Paintbrush,
+  Ruler,
+  ClipboardList,
+  Megaphone,
+  Handshake,
+  Gem,
+  Lock,
+  Bot,
+  Feather,
+  Zap
 } as const;
 
 export type IconName = keyof typeof IconMap;

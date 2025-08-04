@@ -422,11 +422,15 @@ const CollaborationDemoPage = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-2">
-                {COLLABORATION_TYPES.slice(0, 6).map((type) => (
-                  <Badge key={type.id} variant="outline" className="justify-start">
-                    {type.emoji} {type.label}
-                  </Badge>
-                ))}
+                {COLLABORATION_TYPES.slice(0, 6).map((type) => {
+                  const DynamicIcon = IconMap[type.icon as IconName];
+                  return (
+                    <Badge key={type.id} variant="outline" className="justify-start">
+                      {DynamicIcon && <DynamicIcon className="w-4 h-4 mr-1" />}
+                      {type.label}
+                    </Badge>
+                  );
+                })}
                 <Badge variant="secondary" className="justify-start">
                   +{COLLABORATION_TYPES.length - 6} more types...
                 </Badge>
