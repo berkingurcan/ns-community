@@ -8,7 +8,7 @@
   "files.associations": {
     "supabase/functions/**/*.ts": "typescript"
   },
-  "typescript.validate.enable": false,
+  "typescript.validate.enable": true,
   "deno.lint": true,
   "deno.unstable": [],
   "css.validate": true,
