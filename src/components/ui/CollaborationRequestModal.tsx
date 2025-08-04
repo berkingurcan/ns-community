@@ -17,7 +17,9 @@ import {
   Project, 
   COLLABORATION_TYPES, 
   CollaborationType,
-  CreateCollaborationRequestData 
+  CreateCollaborationRequestData,
+  IconMap,
+  IconName
 } from '@/types/project';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
@@ -51,6 +53,11 @@ export function CollaborationRequestModal({
   );
 
   const spotsLeft = project.max_collaborators - project.current_collaborators;
+
+  const CollaborationIcon = ({ iconName }: { iconName: IconName }) => {
+    const Icon = IconMap[iconName];
+    return Icon ? <Icon className="w-5 h-5" /> : null;
+  };
 
   const handleSubmit = async () => {
     if (!selectedType || !isValid) return;
@@ -132,9 +139,9 @@ export function CollaborationRequestModal({
                 {spotsLeft} spots left
               </div>
             </div>
-            {project.notes_for_requests && (
+            {project.collaboration_description && (
               <p className="text-sm text-muted-foreground mb-3">
-                {project.notes_for_requests}
+                {project.collaboration_description}
               </p>
             )}
           </div>
@@ -154,7 +161,7 @@ export function CollaborationRequestModal({
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{type.emoji}</span>
+                    <CollaborationIcon iconName={type.icon as IconName} />
                     <span className="font-medium text-sm">{type.label}</span>
                   </div>
                   <div className="flex flex-wrap gap-1">

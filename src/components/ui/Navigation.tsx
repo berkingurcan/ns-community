@@ -98,9 +98,9 @@ export function Navigation() {
                     {userProfile.discord_username || userProfile.username}
                   </p>
                 )}
-                {userProfile?.discordId && (
+                {userProfile?.discord_id && (
                   <p className="text-sm text-muted-foreground truncate">
-                    Discord ID: {userProfile.discordId}
+                    Discord ID: {userProfile.discord_id}
                   </p>
                 )}
                 <p className="text-sm text-muted-foreground">
