@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, CreateCollaborationRequestData } from '@/types/project';
 import { Button } from '@/components/ui/Button';
@@ -20,7 +20,7 @@ import {
   ExternalLink,
   UserPlus,
   Zap,
-  StickyNote,
+
   Eye,
   Megaphone
 } from 'lucide-react';

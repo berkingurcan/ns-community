@@ -9,7 +9,7 @@ import { OpportunityCard } from '@/components/ui/OpportunityCard';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+
 import { Search, Zap, Briefcase, ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { useLazyLoading } from '@/hooks/useLazyLoading';
@@ -413,7 +413,7 @@ function OpportunitiesPage() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">No Matching Opportunities</h3>
                 <p className="text-muted-foreground mb-4">
-                  Try adjusting your filters to find what you're looking for.
+                  Try adjusting your filters to find what you&apos;re looking for.
                 </p>
                 <Button
                   variant="outline"

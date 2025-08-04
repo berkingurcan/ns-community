@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/badge';
-import { CollaborationRequestsModal } from '@/components/ui/CollaborationRequestsModal';
-import { Briefcase, User, Link2, LogOut, Loader2, Mail, Zap, MessageSquare, Coins } from 'lucide-react';
+import { Briefcase, Link2, LogOut, Loader2, Mail, Zap, MessageSquare, Coins } from 'lucide-react';
 import { CollaborationRequestsDrawer } from '@/components/ui/CollaborationRequestsDrawer';
 
 export function Navigation() {

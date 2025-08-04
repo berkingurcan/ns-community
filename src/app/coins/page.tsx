@@ -6,7 +6,7 @@ import { CoinService } from '@/lib/coins';
 import { CoinTransaction, COIN_CONFIG } from '@/types/coin';
 import withAuth from '@/hoc/withAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/Button';
 import { 
   Coins, 
@@ -17,7 +17,6 @@ import {
   Users, 
   ArrowUpRight,
   ArrowDownLeft,
-  Calendar,
   RefreshCw,
   Loader2,
   Gift,
@@ -176,7 +175,7 @@ const CoinsPage = () => {
                 </div>
                 <h3 className="font-semibold mb-2">The Contract</h3>
                 <p className="text-sm text-muted-foreground">
-                  Spend <span className="font-bold text-primary">{COIN_CONFIG.COLLABORATION_REWARD} coin</span> to engage another's services.
+                  Spend <span className="font-bold text-primary">{COIN_CONFIG.COLLABORATION_REWARD} coin</span> to engage another&apos;s services.
                 </p>
               </div>
             </div>
@@ -194,7 +193,7 @@ const CoinsPage = () => {
               </div>
               <div className="mt-4 pt-4 border-t">
                 <p className="text-xs text-muted-foreground italic">
-                  "No matter the task, the price is the price. One coin. This is the way." - The Manager
+                  &quot;No matter the task, the price is the price. One coin. This is the way.&quot; - The Manager
                 </p>
               </div>
             </div>
