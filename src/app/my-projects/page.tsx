@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { ProjectService } from '@/lib/projects';
-import { CoinService } from '@/lib/coins';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { QuickEditModal } from '@/components/ui/QuickEditModal';
@@ -12,7 +11,7 @@ import { Loader2, Plus } from 'lucide-react';
 import { Project, CreateProjectData, UpdateProjectData } from '@/types/project';
 
 export default function MyProjectsPage() {
-  const { session, userProfile, loading: authLoading } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -41,9 +40,14 @@ export default function MyProjectsPage() {
   }, [authLoading, userProfile, fetchProjects]);
 
   const handleCreateProject = async (data: CreateProjectData) => {
+    if (!userProfile) {
+      console.error("User profile is not available to create a project.");
+      setFormIsLoading(false);
+      return;
+    }
     setFormIsLoading(true);
     try {
-      await ProjectService.createProject(data);
+      await ProjectService.createProject(data, userProfile.id);
       setShowCreateModal(false);
       await fetchProjects();
     } catch (error) {
@@ -104,7 +108,7 @@ export default function MyProjectsPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Projects</h1>
+        <h1 className="text-3xl font-bold">My Ecosystem Projects</h1>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="mr-2 h-4 w-4" /> Create Project
         </Button>

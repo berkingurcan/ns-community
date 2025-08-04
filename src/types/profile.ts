@@ -57,7 +57,14 @@ interface Identity {
   identity_data?: IdentityData;
 }
 
-export const extractProfileFromDiscord = (user: { user_metadata?: Record<string, unknown>; identities?: Identity[]; email?: string }): Partial<ProfileFormData> => {
+import { User } from '@supabase/supabase-js';
+
+// Supabase'in User objesindeki 'identities' alanının tipini genişletiyoruz
+type UserWithIdentities = User & {
+  identities?: Identity[];
+};
+
+export const extractProfileFromDiscord = (user: UserWithIdentities): Partial<ProfileFormData> => {
   console.log('Extracting profile from Discord user:', user);
   
   const userMetadata = user.user_metadata || {};
@@ -78,23 +85,23 @@ export const extractProfileFromDiscord = (user: { user_metadata?: Record<string,
   const discordData = discordIdentity?.identity_data || userMetadata;
   
   // Username öncelik sırası: Discord username > Discord display name > Full name > Email prefix
-  const username = 
+  const username: string = String(
     discordData.username || 
     discordData.global_name || 
     discordData.full_name || 
     userMetadata.name || 
     user.email?.split('@')[0] || 
-    'User';
+    '');
   
   // Discord ID
-  const discordId = 
+  const discordId: string = String(
     discordData.id || 
     userMetadata.provider_id || 
     userMetadata.sub || 
-    '';
+    '');
   
   // Bio/About me bilgisi varsa shill yourself için kullan
-  const shillYourself = discordData.bio || discordData.about_me || '';
+  const shillYourself: string = String(discordData.bio || discordData.about_me || '');
   
   // GitHub username
   const github = 

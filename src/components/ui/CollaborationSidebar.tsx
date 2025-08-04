@@ -173,7 +173,7 @@ export function CollaborationSidebar({
                         isProcessing={processingRequests.has(request.id)}
                         onAccept={() => handleAccept(request.id)}
                         onDeny={() => handleDeny(request.id)}
-                        getCollaborationType={() => ({ label: 'Collaboration', icon: () => null })}
+                        getCollaborationType={() => ({ label: 'Collaboration', icon: null })}
                       />
                     ))}
                   </div>
@@ -193,7 +193,7 @@ export function CollaborationSidebar({
                         request={request}
                         isProcessing={processingRequests.has(request.id)}
                         onArchive={() => handleArchive(request.id)}
-                        getCollaborationType={() => ({ label: 'Collaboration', icon: () => null })}
+                        getCollaborationType={() => ({ label: 'Collaboration', icon: null })}
                         isAccepted
                       />
                     ))}

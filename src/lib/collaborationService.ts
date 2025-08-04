@@ -161,16 +161,18 @@ export class CollaborationService {
   ) {
     return supabase 
       .channel('collaboration_requests')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'collaboration_requests', 
-          filter: `project.user_id=eq.${userId}`
-        },
-        callback
-      )
+      .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'collaboration_requests',
+      filter: `project_owner_id=eq.${userId}`
+    }, (payload) => {
+      callback({
+        eventType: payload.eventType,
+        new: payload.new as CollaborationRequest,
+        old: payload.old as CollaborationRequest,
+      });
+    })
       .subscribe();
   }
 

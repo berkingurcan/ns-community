@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Project, PROJECT_CATEGORIES, COLLABORATION_TYPES, CreateCollaborationRequestData } from '@/types/project';
 import { Button } from '@/components/ui/Button';
 
@@ -20,7 +21,8 @@ import {
   UserPlus,
   Zap,
   StickyNote,
-  Eye
+  Eye,
+  Megaphone
 } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -55,6 +57,9 @@ export function ProjectCard({
   hasDiscordRole = false
 }: ProjectCardProps) {
   const [showQuickEdit, setShowQuickEdit] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const iconRef = useRef<HTMLDivElement>(null);
 
 
   // Helper functions for collaboration system
@@ -77,8 +82,23 @@ export function ProjectCard({
   const category = getProjectCategory();
   const lookingForTypes = getCollaborationTypes();
 
+  const handleMouseEnter = () => {
+    if (iconRef.current) {
+      const rect = iconRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top - 16
+      });
+      setShowTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
   return (
-    <Card className="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 border-0 bg-gradient-to-br from-background via-background to-muted/20">
+    <Card className="group relative transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 border-0 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Premium Gradient Border */}
       <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       <div className="absolute inset-[1px] bg-background rounded-[inherit]" />
@@ -177,49 +197,20 @@ export function ProjectCard({
             </p>
           </div>
 
-          {/* Collaboration Section - Premium Design */}
+          {/* Collaboration Section - Small icon with hover tooltip */}
           {lookingForTypes.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
-                  <UserPlus className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            <div className="flex items-center gap-2">
+              <div className="flex items-center">
+                <div 
+                  ref={iconRef}
+                  className="w-6 h-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center cursor-help"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <Megaphone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <h4 className="text-sm font-semibold text-foreground">Seeking Collaborators</h4>
               </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {lookingForTypes.slice(0, 3).map((type, index) => type ? (
-                  <div
-                    key={type.id || index}
-                    className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 dark:text-emerald-300"
-                  >
-                    <span>{type.emoji}</span>
-                    <span>{type.label}</span>
-                  </div>
-                ) : null)}
-                {lookingForTypes.length > 3 && (
-                  <div className="flex items-center px-3 py-1.5 bg-muted rounded-lg text-xs font-medium text-muted-foreground">
-                    +{lookingForTypes.length - 3} more
-                  </div>
-                )}
-              </div>
-              
-              {/* Collaboration Note - Small icon with hover tooltip */}
-              {hasDiscordRole && project.collaboration_status === 'open' && project.notes_for_requests && (
-                <div className="flex items-center gap-2">
-                  <div className="group relative">
-                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full cursor-help">
-                      <StickyNote className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-xs z-50">
-                      <div className="font-medium mb-1">Note for Collaborators</div>
-                      <div className="leading-relaxed">{project.notes_for_requests}</div>
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Collaboration Notes</span>
-                </div>
-              )}
+              <span className="text-xs text-muted-foreground">Actively seeking collaborators</span>
             </div>
           )}
 
@@ -363,6 +354,31 @@ export function ProjectCard({
             if (onEditMore) onEditMore();
           }}
         />
+      )}
+
+      {/* Portal Tooltip */}
+      {showTooltip && typeof window !== 'undefined' && createPortal(
+        <div 
+          className="fixed px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg shadow-xl pointer-events-none max-w-xs z-[9999] transition-opacity duration-200"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div className="font-medium mb-1">Seeking Collaborators</div>
+          <div className="leading-relaxed">
+            Looking for: {lookingForTypes.map(type => type?.label).join(', ')}
+          </div>
+          {project.notes_for_requests && (
+            <div className="mt-2 pt-2 border-t border-gray-700 dark:border-gray-300">
+              <div className="font-medium mb-1">Notes:</div>
+              <div className="leading-relaxed">{project.notes_for_requests}</div>
+            </div>
+          )}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
+        </div>,
+        document.body
       )}
     </Card>
   );

@@ -13,7 +13,7 @@ export interface Project {
   categories: ProjectCategory[];
   collaboration_status: CollaborationStatus;
   looking_for_collaboration: CollaborationType[];
-  notes_for_requests?: string;
+  collaboration_description?: string;
   max_collaborators: number;
   current_collaborators: number;
   created_at: string;
@@ -33,7 +33,7 @@ export interface CreateProjectData {
   categories: ProjectCategory[];
   collaboration_status: CollaborationStatus;
   looking_for_collaboration: CollaborationType[];
-  notes_for_requests?: string;
+  collaboration_description?: string;
   max_collaborators: number;
 }
 
@@ -63,30 +63,30 @@ export type Expertise = typeof EXPERTISE_OPTIONS[number];
 // Project Categories
 export const PROJECT_CATEGORIES = [
   // Core Development
-  { id: 'web3-dapp', label: 'Web3 DApp', emoji: '🌐', description: 'Decentralized applications' },
-  { id: 'defi', label: 'DeFi Protocol', emoji: '💰', description: 'Decentralized finance' },
-  { id: 'nft', label: 'NFT Platform', emoji: '🖼️', description: 'Non-fungible tokens' },
-  { id: 'gaming', label: 'GameFi', emoji: '🎮', description: 'Gaming & NFTs' },
-  { id: 'dao', label: 'DAO Tooling', emoji: '🏛️', description: 'Governance tools' },
+  { id: 'web3-dapp', label: 'Web3 DApp', icon: 'Globe', description: 'Decentralized applications' },
+  { id: 'defi', label: 'DeFi Protocol', icon: 'DollarSign', description: 'Decentralized finance' },
+  { id: 'nft', label: 'NFT Platform', icon: 'Image', description: 'Non-fungible tokens' },
+  { id: 'gaming', label: 'GameFi', icon: 'Gamepad2', description: 'Gaming & NFTs' },
+  { id: 'dao', label: 'DAO Tooling', icon: 'Archive', description: 'Governance tools' },
   
   // Infrastructure  
-  { id: 'blockchain', label: 'Blockchain', emoji: '⛓️', description: 'L1/L2 solutions' },
-  { id: 'developer-tools', label: 'Developer Tools', emoji: '🛠️', description: 'SDKs, APIs, frameworks' },
-  { id: 'wallet', label: 'Wallet', emoji: '👛', description: 'Crypto wallets' },
-  { id: 'bridge', label: 'Cross-chain', emoji: '🌉', description: 'Interoperability' },
+  { id: 'blockchain', label: 'Blockchain', icon: 'Link', description: 'L1/L2 solutions' },
+  { id: 'developer-tools', label: 'Developer Tools', icon: 'Hammer', description: 'SDKs, APIs, frameworks' },
+  { id: 'wallet', label: 'Wallet', icon: 'Wallet', description: 'Crypto wallets' },
+  { id: 'bridge', label: 'Cross-chain', icon: 'Split', description: 'Interoperability' },
   
   // Applications
-  { id: 'social', label: 'Social Platform', emoji: '👥', description: 'Web3 social networks' },
-  { id: 'marketplace', label: 'Marketplace', emoji: '🛒', description: 'Trading platforms' },
-  { id: 'analytics', label: 'Analytics', emoji: '📊', description: 'Data & insights' },
-  { id: 'education', label: 'Education', emoji: '🎓', description: 'Learning platforms' },
-  { id: 'ai', label: 'AI Integration', emoji: '🤖', description: 'AI-powered tools' },
+  { id: 'social', label: 'Social Platform', icon: 'Users', description: 'Web3 social networks' },
+  { id: 'marketplace', label: 'Marketplace', icon: 'ShoppingCart', description: 'Trading platforms' },
+  { id: 'analytics', label: 'Analytics', icon: 'BarChart', description: 'Data & insights' },
+  { id: 'education', label: 'Education', icon: 'GraduationCap', description: 'Learning platforms' },
+  { id: 'ai', label: 'AI Integration', icon: 'Bot', description: 'AI-powered tools' },
   
   // Business
-  { id: 'saas', label: 'SaaS', emoji: '☁️', description: 'Software as a service' },
-  { id: 'enterprise', label: 'Enterprise', emoji: '🏢', description: 'B2B solutions' },
-  { id: 'mobile', label: 'Mobile App', emoji: '📱', description: 'Mobile applications' },
-  { id: 'other', label: 'Other', emoji: '✨', description: 'Something unique' }
+  { id: 'saas', label: 'SaaS', icon: 'Cloud', description: 'Software as a service' },
+  { id: 'enterprise', label: 'Enterprise', icon: 'Building', description: 'B2B solutions' },
+  { id: 'mobile', label: 'Mobile App', icon: 'Smartphone', description: 'Mobile applications' },
+  { id: 'other', label: 'Other', icon: 'Sparkles', description: 'Something unique' }
 ] as const;
 
 export type ProjectCategory = typeof PROJECT_CATEGORIES[number]['id'];
@@ -94,29 +94,29 @@ export type ProjectCategory = typeof PROJECT_CATEGORIES[number]['id'];
 // Collaboration Types
 export const COLLABORATION_TYPES = [
   // Technical
-  { id: 'frontend-dev', label: 'Frontend Development', emoji: '💻', skills: ['React', 'Vue', 'Angular'] },
-  { id: 'backend-dev', label: 'Backend Development', emoji: '⚙️', skills: ['Node.js', 'Python', 'Rust'] },
-  { id: 'blockchain-dev', label: 'Blockchain Development', emoji: '⛓️', skills: ['Solidity', 'Rust', 'Go'] },
-  { id: 'mobile-dev', label: 'Mobile Development', emoji: '📱', skills: ['React Native', 'Flutter', 'Swift'] },
-  { id: 'devops', label: 'DevOps & Infrastructure', emoji: '🚀', skills: ['AWS', 'Docker', 'K8s'] },
+  { id: 'frontend-dev', label: 'Frontend Development', icon: 'Laptop', skills: ['React', 'Vue', 'Angular'] },
+  { id: 'backend-dev', label: 'Backend Development', icon: 'Settings', skills: ['Node.js', 'Python', 'Rust'] },
+  { id: 'blockchain-dev', label: 'Blockchain Development', icon: 'Link', skills: ['Solidity', 'Rust', 'Go'] },
+  { id: 'mobile-dev', label: 'Mobile Development', icon: 'Smartphone', skills: ['React Native', 'Flutter', 'Swift'] },
+  { id: 'devops', label: 'DevOps & Infrastructure', icon: 'Rocket', skills: ['AWS', 'Docker', 'K8s'] },
   
   // Design & UX
-  { id: 'ui-design', label: 'UI/UX Design', emoji: '🎨', skills: ['Figma', 'Sketch', 'Adobe'] },
-  { id: 'graphic-design', label: 'Graphic Design', emoji: '🖌️', skills: ['Branding', 'Logo', 'Visual'] },
-  { id: 'product-design', label: 'Product Design', emoji: '📐', skills: ['User Research', 'Prototyping'] },
+  { id: 'ui-design', label: 'UI/UX Design', icon: 'Palette', skills: ['Figma', 'Sketch', 'Adobe'] },
+  { id: 'graphic-design', label: 'Graphic Design', icon: 'Paintbrush', skills: ['Branding', 'Logo', 'Visual'] },
+  { id: 'product-design', label: 'Product Design', icon: 'Ruler', skills: ['User Research', 'Prototyping'] },
   
   // Business
-  { id: 'product-mgmt', label: 'Product Management', emoji: '📋', skills: ['Strategy', 'Roadmap', 'Analytics'] },
-  { id: 'marketing', label: 'Marketing', emoji: '📢', skills: ['Growth', 'Content', 'SEO'] },
-  { id: 'business-dev', label: 'Business Development', emoji: '🤝', skills: ['Partnerships', 'Sales', 'Strategy'] },
-  { id: 'community', label: 'Community Management', emoji: '👥', skills: ['Discord', 'Social', 'Events'] },
+  { id: 'product-mgmt', label: 'Product Management', icon: 'ClipboardList', skills: ['Strategy', 'Roadmap', 'Analytics'] },
+  { id: 'marketing', label: 'Marketing', icon: 'Megaphone', skills: ['Growth', 'Content', 'SEO'] },
+  { id: 'business-dev', label: 'Business Development', icon: 'Handshake', skills: ['Partnerships', 'Sales', 'Strategy'] },
+  { id: 'community', label: 'Community Management', icon: 'Users', skills: ['Discord', 'Social', 'Events'] },
   
   // Specialized
-  { id: 'tokenomics', label: 'Tokenomics', emoji: '💎', skills: ['Economics', 'Game Theory', 'DeFi'] },
-  { id: 'security', label: 'Security Audit', emoji: '🔒', skills: ['Smart Contracts', 'Penetration Testing'] },
-  { id: 'ai-ml', label: 'AI/ML', emoji: '🤖', skills: ['Machine Learning', 'Data Science'] },
-  { id: 'content', label: 'Content Creation', emoji: '✍️', skills: ['Writing', 'Video', 'Tutorials'] },
-  { id: 'power-user', label: 'Power User/Tester', emoji: '⚡', skills: ['Testing', 'Feedback', 'Bug Reports'] }
+  { id: 'tokenomics', label: 'Tokenomics', icon: 'Gem', skills: ['Economics', 'Game Theory', 'DeFi'] },
+  { id: 'security', label: 'Security Audit', icon: 'Lock', skills: ['Smart Contracts', 'Penetration Testing'] },
+  { id: 'ai-ml', label: 'AI/ML', icon: 'Bot', skills: ['Machine Learning', 'Data Science'] },
+  { id: 'content', label: 'Content Creation', icon: 'Feather', skills: ['Writing', 'Video', 'Tutorials'] },
+  { id: 'power-user', label: 'Power User/Tester', icon: 'Zap', skills: ['Testing', 'Feedback', 'Bug Reports'] }
 ] as const;
 
 export type CollaborationType = typeof COLLABORATION_TYPES[number]['id'];
@@ -206,5 +206,6 @@ export interface QuickEditData {
 // Popular Categories for Quick Edit
 export const POPULAR_CATEGORIES = [
   'web3-dapp', 'defi', 'nft', 'gaming', 'dao', 'blockchain', 
-  'developer-tools', 'wallet', 'ai', 'saas', 'mobile'
+  'developer-tools', 'wallet', 'bridge', 'social', 'marketplace',
+  'analytics', 'education', 'ai', 'saas', 'enterprise', 'mobile', 'other'
 ] as const;

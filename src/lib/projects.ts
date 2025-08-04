@@ -185,7 +185,7 @@ export class ProjectService {
       collaboration_status: updates.collaboration_status,
       looking_for_collaboration: updates.looking_for_collaboration,
       collaboration_description: updates.collaboration_description,
-      category: updates.category,
+      categories: updates.categories,
       max_collaborators: updates.max_collaborators,
       updated_at: new Date().toISOString()
     };

@@ -11,6 +11,8 @@ export interface UserProfile {
     id: string;
     username: string;
     discord_id: string;
+    discord_username?: string;
+    status: 'needs_onboarding' | 'active' | 'banned';
     shill_yourself?: string;
     avatar_url?: string;
     expertises?: string[];
@@ -140,7 +142,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Profile creation timeout')), 5000)
       );
       
-      const { data, error }: { data: UserProfile | null, error: PostgrestError | null } = await Promise.race([insertQuery, insertTimeout]);
+      const result = (await Promise.race([
+        insertQuery,
+        insertTimeout,
+      ])) as { data: UserProfile | null; error: PostgrestError | null } | Error;
+
+      if (result instanceof Error) {
+        console.warn('⚠️ Profile creation timed out');
+        return null;
+      }
+      
+      const { data, error } = result;
 
       if (error) {
         if (error.message === 'Profile creation timeout') {
@@ -184,7 +196,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => reject(new Error('Database query timeout')), 5000)
       );
       
-      const { data, error }: { data: UserProfile | null, error: PostgrestError | null } = await Promise.race([profileQuery, queryTimeout]);
+      const result = (await Promise.race([
+        profileQuery,
+        queryTimeout,
+      ])) as { data: UserProfile | null; error: PostgrestError | null } | Error;
+
+      if (result instanceof Error) {
+        console.warn('⚠️ Profile fetch timed out');
+        setUserProfile(null);
+        return;
+      }
+      
+      const { data, error } = result;
 
       if (error) {
         if (error.message === 'Database query timeout') {
@@ -326,7 +349,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setTimeout(() => reject(new Error('Session fetch timeout')), 4000);
           });
           
-          const { data: { session }, error }: { data: { session: Session | null }, error: PostgrestError | null } = await Promise.race([sessionPromise, timeoutPromise]);
+          const result = (await Promise.race([
+            sessionPromise,
+            timeoutPromise,
+          ])) as { data: { session: Session | null }; error: PostgrestError | null } | Error;
+
+          if (result instanceof Error) {
+            console.error('Session fetch error:', result);
+            setLoading(false);
+            return;
+          }
+
+          const { data: { session }, error } = result;
           console.log('Initial session:', session);
           console.log('Initial session error:', error);
           

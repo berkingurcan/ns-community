@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (session?.user) {
       console.log('🔍 Loading Discord data for onboarding...');
-      const discordProfile = extractProfileFromDiscord(session.user as unknown as { user_metadata?: Record<string, unknown>; identities?: Array<Record<string, unknown>>; email?: string });
+      const discordProfile = extractProfileFromDiscord(session.user);
       
       setFormData(prev => ({
         ...prev,

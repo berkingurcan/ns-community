@@ -3,12 +3,20 @@
 import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerTitle,
+  DrawerDescription
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CoinService } from '@/lib/coins';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { 
   User, 
   MessageSquare, 
@@ -33,20 +41,22 @@ interface CollaborationRequest {
   createdAt: string;
 }
 
-interface CollaborationRequestsModalProps {
+interface CollaborationRequestsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId?: string;
 }
 
-export function CollaborationRequestsModal({ 
-  isOpen, 
-  onClose, 
-  currentUserId 
-}: CollaborationRequestsModalProps) {
+export function CollaborationRequestsDrawer({
+  isOpen,
+  onClose,
+  currentUserId
+}: CollaborationRequestsDrawerProps) {
   const { refreshCoinBalance } = useAuth();
   const [requests, setRequests] = useState<CollaborationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
@@ -168,13 +178,14 @@ export function CollaborationRequestsModal({
       );
 
       if (!coinTransferResult.success) {
-        alert(`Collaboration accepted, but coin transfer failed: ${coinTransferResult.error}`);
+        toast.error(`Collaboration accepted, but coin transfer failed: ${coinTransferResult.error}`);
       } else {
         console.log('✅ Coin transfer successful:', coinTransferResult.transaction);
         // Refresh coin balance
         if (refreshCoinBalance) {
           refreshCoinBalance();
         }
+        toast.success(`🏛️ Continental Transaction Complete!\n\n1 Continental Coin has been transferred to ${request.applicantName}.\n\n"Honor demands payment. The service is rendered, the coin is earned." - The Continental`);
       }
 
       // Update request status
@@ -186,12 +197,9 @@ export function CollaborationRequestsModal({
         )
       );
 
-      // Show success message - Continental style
-      alert(`🏛️ CONTINENTAL TRANSACTION COMPLETE!\n\n1 Continental Coin has been transferred to ${request.applicantName}.\n\n"Honor demands payment. The service is rendered, the coin is earned." - The Continental`);
-      
     } catch (error: unknown) {
       console.error('Error accepting request:', error);
-      alert('Failed to accept collaboration request. Please try again.');
+      toast.error('Failed to accept collaboration request. Please try again.');
     }
   };
 
@@ -207,8 +215,10 @@ export function CollaborationRequestsModal({
             : req
         )
       );
+      toast.info(`Collaboration request for ${requests.find(r => r.id === requestId)?.projectTitle} has been declined.`);
     } catch (error: unknown) {
       console.error('Error rejecting request:', error);
+      toast.error('Failed to reject collaboration request. Please try again.');
     }
   };
 
@@ -228,31 +238,31 @@ export function CollaborationRequestsModal({
   const respondedRequests = requests.filter(req => req.status !== 'pending');
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Drawer open={isOpen} onOpenChange={onClose} direction="right">
+      <DrawerContent className="fixed bottom-0 right-0 top-0 mt-0 w-full md:w-[400px] rounded-t-[0px]">
+        <DrawerHeader className="px-4">
+          <DrawerTitle className="flex items-center gap-2">
             <Mail className="w-5 h-5 text-primary" />
             Collaboration Requests
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          </DrawerTitle>
+          <DrawerDescription className="text-sm text-muted-foreground">
             Manage collaboration requests for your projects
-          </p>
-        </DialogHeader>
+          </DrawerDescription>
+        </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           
           {/* Pending Requests */}
           {pendingRequests.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-orange-500" />
+              <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
                 Pending Requests ({pendingRequests.length})
               </h3>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {pendingRequests.map((request) => (
-                  <Card key={request.id} className="border-l-4 border-l-orange-400">
+                  <Card key={request.id} className="border-l-4 border-l-primary/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
@@ -263,25 +273,32 @@ export function CollaborationRequestsModal({
                               alt={request.applicantName || 'Applicant avatar'}
                               width={40}
                               height={40}
-                              className="w-10 h-10 rounded-full border-2 border-border"
+                              className="w-10 h-10 rounded-full object-cover border-2 border-border"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center border-2 border-border">
-                              <User className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center border-2 border-border text-foreground/60">
+                              <User className="w-5 h-5" />
                             </div>
                           )}
                           
                           {/* Request Info */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-semibold text-sm">{request.applicantName}</h4>
-                              <Badge variant="outline" className="text-xs">
+                              <h4 className="font-semibold text-base">
+                                <button onClick={() => router.push(`/profile/${request.applicantId}`)} className="hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded-sm -ml-0.5 -mr-0.5 px-0.5 py-0.5">
+                                  {request.applicantName}
+                                </button>
+                              </h4>
+                              <span className="text-xs text-muted-foreground">
                                 @{request.applicantUsername}
-                              </Badge>
+                              </span>
                             </div>
                             
-                            <p className="text-xs text-muted-foreground mb-2">
-                              Wants to collaborate on <span className="font-medium">{request.projectTitle}</span>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              Wants to collaborate on 
+                              <button onClick={() => router.push(`/projects/${request.projectId}`)} className="font-bold hover:underline focus:outline-none focus:ring-2 focus:ring-primary rounded-sm -ml-0.5 -mr-0.5 px-0.5 py-0.5">
+                                {request.projectTitle}
+                              </button>
                             </p>
                             
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -348,11 +365,11 @@ export function CollaborationRequestsModal({
                 {respondedRequests.map((request) => (
                   <Card 
                     key={request.id} 
-                    className={`border-l-4 opacity-75 ${
+                    className={`border-l-4 ${
                       request.status === 'accepted' 
-                        ? 'border-l-emerald-400' 
-                        : 'border-l-red-400'
-                    }`}
+                        ? 'border-l-emerald-200 dark:border-l-emerald-800' 
+                        : 'border-l-red-200 dark:border-l-red-800'
+                    } bg-background/50 text-muted-foreground`}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
@@ -366,8 +383,8 @@ export function CollaborationRequestsModal({
                               className="w-8 h-8 rounded-full border"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center border">
-                              <User className="w-4 h-4 text-white" />
+                            <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center border text-foreground/60">
+                              <User className="w-4 h-4" />
                             </div>
                           )}
                           
@@ -396,7 +413,7 @@ export function CollaborationRequestsModal({
           {/* Empty State */}
           {requests.length === 0 && !loading && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">No collaboration requests</h3>
@@ -414,7 +431,7 @@ export function CollaborationRequestsModal({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }

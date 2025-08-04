@@ -90,8 +90,8 @@ export function QuickEditModal({
     looking_for_collaboration: project.looking_for_collaboration || [],
     categories: project.categories || []
   });
-  const [notesForRequests, setNotesForRequests] = useState(
-    project.notes_for_requests || ''
+  const [collaborationDescription, setCollaborationDescription] = useState(
+    project.collaboration_description || ''
   );
   const [showAllCategories, setShowAllCategories] = useState(false);
 
@@ -122,7 +122,7 @@ export function QuickEditModal({
         status: formData.status,
         collaboration_status: formData.collaboration_status,
         looking_for_collaboration: formData.looking_for_collaboration,
-        notes_for_requests: notesForRequests.trim() || undefined,
+        collaboration_description: collaborationDescription.trim() || undefined,
         categories: formData.categories,
         updated_at: new Date().toISOString()
       };
@@ -146,7 +146,7 @@ export function QuickEditModal({
       looking_for_collaboration: project.looking_for_collaboration || [],
       categories: project.categories || []
     });
-    setNotesForRequests(project.notes_for_requests || '');
+    setCollaborationDescription(project.collaboration_description || '');
     setShowAllCategories(false);
     onClose();
   };
@@ -164,7 +164,7 @@ export function QuickEditModal({
   };
 
   const getCategoryIcon = (categoryId: ProjectCategory) => {
-    const iconMap: Record<ProjectCategory, React.ComponentType<{}> | undefined> = {
+    const iconMap: Record<ProjectCategory, React.ComponentType<{ className?: string }> | undefined> = {
       'web3-dapp': Globe,
       'defi': DollarSign,
       'nft': Image,
@@ -188,7 +188,7 @@ export function QuickEditModal({
   };
 
   const getCollaborationIcon = (typeId: CollaborationType) => {
-    const iconMap: Record<CollaborationType, React.ComponentType<{}> | undefined> = {
+    const iconMap: Record<CollaborationType, React.ComponentType<{ className?: string }> | undefined> = {
       'frontend-dev': Monitor,
       'backend-dev': Server,
       'blockchain-dev': Blocks,
@@ -383,14 +383,14 @@ export function QuickEditModal({
                     </Label>
                     <div className="relative">
                       <textarea
-                        value={notesForRequests}
-                        onChange={(e) => setNotesForRequests(e.target.value)}
+                                        value={collaborationDescription}
+                onChange={(e) => setCollaborationDescription(e.target.value)}
                         placeholder="Brief note for potential collaborators (visible to NS members only)..."
                         className="w-full h-16 px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white dark:bg-gray-900"
                         maxLength={140}
                       />
                       <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-white dark:bg-gray-900 px-1 rounded">
-                        {140 - notesForRequests.length}
+                        {140 - collaborationDescription.length}
                       </div>
                     </div>
                   </div>
