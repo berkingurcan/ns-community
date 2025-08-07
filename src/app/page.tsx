@@ -20,6 +20,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false);
   // const [selectedExpertise, setSelectedExpertise] = useState<string>(''); // Removed as per commit analysis and user preference
 
   const projectsPerPage = 9;
@@ -40,6 +41,14 @@ export default function HomePage() {
       const result = await ProjectService.getPaginatedProjects(page, projectsPerPage); 
       let filteredProjects = result.projects;
 
+      // Apply My Projects filter
+      if (showMyProjectsOnly && userProfile?.id) {
+        filteredProjects = filteredProjects.filter(project => 
+          project.user_id === userProfile.id
+        );
+      }
+
+      // Apply search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         filteredProjects = filteredProjects.filter(project =>
@@ -58,7 +67,7 @@ export default function HomePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, projectsPerPage]); // Added projectsPerPage to dependencies
+  }, [searchQuery, showMyProjectsOnly, userProfile?.id, projectsPerPage]);
 
   useEffect(() => {
       loadProjects(1);
@@ -146,6 +155,29 @@ export default function HomePage() {
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
+            {isAuthorized && (
+              <div className="md:w-48">
+                <Button
+                  onClick={() => setShowMyProjectsOnly(!showMyProjectsOnly)}
+                  variant={showMyProjectsOnly ? "default" : "outline"}
+                  className="w-full py-3 h-auto"
+                >
+                  {showMyProjectsOnly ? "✓ My Projects" : "🔍 My Projects"}
+                </Button>
+              </div>
+            )}
+            {(searchQuery || showMyProjectsOnly) && (
+              <Button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowMyProjectsOnly(false);
+                }}
+                variant="outline"
+                className="px-4 py-3 h-auto"
+              >
+                Clear All
+              </Button>
+            )}
           </div>
         </div>
 
