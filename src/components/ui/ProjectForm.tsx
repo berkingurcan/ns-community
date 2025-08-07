@@ -138,11 +138,13 @@ export function ProjectForm({ project, onCreate, onUpdate, onDelete, onCancel, i
         </div>
 
         {/* Project Image */}
-        <ImageUpload
-          currentImageUrl={formData.image_url}
-          onImageUploaded={handleImageUploaded}
-          onImageRemoved={handleImageRemoved}
-        />
+        <div className="space-y-2">
+          <ImageUpload
+            currentImageUrl={formData.image_url}
+            onImageUploaded={handleImageUploaded}
+            onImageRemoved={handleImageRemoved}
+          />
+        </div>
 
         {/* Project Description */}
         <div className="space-y-2">

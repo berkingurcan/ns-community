@@ -63,8 +63,16 @@ export class ImageUploadService {
 
   // Internal upload method without timeout
   private static async performUpload(file: File, userId: string): Promise<ImageUploadResult> {
+    console.log("ImageUploadService: Starting upload", { 
+      fileName: file.name, 
+      fileSize: file.size, 
+      fileType: file.type, 
+      userId 
+    });
+    
     // Generate unique filename
     const fileName = this.generateFileName(userId, file.name);
+    console.log("ImageUploadService: Generated filename", fileName);
 
     // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
@@ -75,13 +83,23 @@ export class ImageUploadService {
       });
 
     if (error) {
-      console.error('Upload error details:', error);
+      console.error('Supabase upload error:', { 
+        error, 
+        message: error.message, 
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        fileName,
+        bucketName: this.BUCKET_NAME
+      });
       
       // Provide more specific error messages
       if (error.message.includes('row-level security')) {
-        throw new Error('Permission denied. Please make sure you are signed in and try again.');
+        throw new Error('Permission denied. Storage policies not configured properly.');
       } else if (error.message.includes('duplicate')) {
         throw new Error('A file with this name already exists. Please try again.');
+      } else if (error.message.includes('bucket')) {
+        throw new Error('Storage bucket not found. Please contact support.');
       } else {
         throw new Error(`Failed to upload image: ${error.message}`);
       }
@@ -96,10 +114,13 @@ export class ImageUploadService {
       .from(this.BUCKET_NAME)
       .getPublicUrl(fileName);
 
-    return {
+    const result = {
       url: urlData.publicUrl,
       path: fileName
     };
+
+    console.log("ImageUploadService: Upload successful", result);
+    return result;
   }
 
   // Delete image from Supabase Storage

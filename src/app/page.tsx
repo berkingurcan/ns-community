@@ -64,7 +64,7 @@ export default function HomePage() {
       loadProjects(1);
   }, [loadProjects]);
   
-  const handleCreateProject = () => router.push('/projects');
+  const handleCreateProject = () => router.push('/projects/new');
   const handleViewProfile = () => router.push('/profile');
 
   // New renderAuthOverlay function from the target commit
