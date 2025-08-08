@@ -70,8 +70,10 @@ export async function GET(
     }
 
     // Filter out requests where the project doesn't belong to the user
-    // This is an additional security check
-    const filteredRequests = requests?.filter(req => req.project?.user_id === userId) || [];
+    // and where requester/profile join failed (invalid requester_id)
+    const filteredRequests = (requests || [])
+      .filter(req => req.project?.user_id === userId)
+      .filter(req => !!req.requester);
 
     return NextResponse.json({
       success: true,

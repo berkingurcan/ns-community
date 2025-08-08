@@ -246,6 +246,27 @@ export class CoinService {
         requestId: collaborationRequestId
       });
       
+      // Preflight: ensure both users exist in user_profiles (avoids DB exceptions with opaque messages)
+      try {
+        const { data: usersCheck, error: usersCheckError } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .in('id', [helperId, helpeeId]);
+        if (usersCheckError) {
+          console.warn('User existence check failed:', usersCheckError);
+        } else {
+          const found = new Set((usersCheck || []).map((u: { id: string }) => u.id));
+          if (!found.has(helperId)) {
+            return { success: false, error: 'Recipient profile not found. Please refresh the page.' };
+          }
+          if (!found.has(helpeeId)) {
+            return { success: false, error: 'Your profile was not found. Please re-login.' };
+          }
+        }
+      } catch (preflightErr) {
+        console.warn('Preflight user check error:', preflightErr);
+      }
+
       // Call the Supabase database function for collaboration accept
       const { data, error } = await supabase.rpc('handle_collaboration_accept', {
         p_helper_id: helperId,

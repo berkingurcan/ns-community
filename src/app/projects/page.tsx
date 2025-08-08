@@ -1,25 +1,25 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
-import { ProjectForm } from '@/components/ui/ProjectForm';
 import { ProjectService } from '@/lib/projects';
-import { Project, CreateProjectData, UpdateProjectData, EXPERTISE_OPTIONS } from '@/types/project';
+import { Project, UpdateProjectData, PROJECT_CATEGORIES, POPULAR_CATEGORIES, ProjectCategory } from '@/types/project';
 import withAuth from '@/hoc/withAuth';
+import { toast } from "sonner";
 
 const ProjectsPage = () => {
+  const router = useRouter();
   const { userProfile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | undefined>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'my-projects' | 'browse' | 'create'>('my-projects');
+  const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedExpertise, setSelectedExpertise] = useState<string>('');
+  const [selectedCategories, setSelectedCategories] = useState<ProjectCategory[]>([]);
+  const [openOnly, setOpenOnly] = useState<boolean>(false);
 
   const loadUserProjects = useCallback(async () => {
     if (!userProfile?.id) return;
@@ -29,6 +29,7 @@ const ProjectsPage = () => {
       setProjects(userProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
+      toast.error('Failed to load your projects.');
     }
   }, [userProfile?.id]);
 
@@ -38,6 +39,7 @@ const ProjectsPage = () => {
       setAllProjects(allProjectsData);
     } catch (error) {
       console.error('Error loading all projects:', error);
+      toast.error('Failed to load ecosystem projects.');
     }
   }, []);
 
@@ -53,41 +55,6 @@ const ProjectsPage = () => {
     }
   }, [userProfile?.id, loadUserProjects, loadAllProjects]);
 
-  const handleCreateProject = async (data: CreateProjectData) => {
-    if (!userProfile?.id) return;
-
-    setIsSubmitting(true);
-    try {
-      await ProjectService.createProject(data, userProfile.id);
-      await loadUserProjects();
-      setShowForm(false);
-      setActiveTab('my-projects');
-    } catch (error) {
-      console.error('Error creating project:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create project');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUpdateProject = async (data: UpdateProjectData) => {
-    if (!userProfile?.id) return;
-
-    setIsSubmitting(true);
-    try {
-      await ProjectService.updateProject(data, userProfile.id);
-      await loadUserProjects();
-      await loadAllProjects();
-      setEditingProject(undefined);
-      setShowForm(false);
-    } catch (error) {
-      console.error('Error updating project:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update project');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleDeleteProject = async (projectId: string) => {
     if (!userProfile?.id) return;
 
@@ -95,36 +62,55 @@ const ProjectsPage = () => {
 
     try {
       await ProjectService.deleteProject(projectId, userProfile.id);
+      toast.success('Project deleted successfully.');
       await loadUserProjects();
       await loadAllProjects();
     } catch (error) {
       console.error('Error deleting project:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete project');
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Failed to delete project: ${errorMessage}`);
     }
   };
-
+  
   const handleEditProject = (project: Project) => {
-    setEditingProject(project);
-    setShowForm(true);
-    setActiveTab('create');
+    // Navigate to a new edit page, which we will create later.
+    // For now, this can be a placeholder.
+    router.push(`/projects/edit/${project.id}`);
+    toast.info("Navigating to edit page is not implemented yet.");
   };
 
-  const handleCancelForm = () => {
-    setShowForm(false);
-    setEditingProject(undefined);
+  const handleCreateClick = () => {
+    if (projects.length >= 3) {
+      toast.error('You have reached the maximum project limit (3).');
+    } else {
+      router.push('/projects/new');
+    }
   };
 
   const filteredProjects = allProjects.filter(project => {
-    if (project.user_id === userProfile?.id) return false;
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      if (!project.title.toLowerCase().includes(query) &&
-          !project.description.toLowerCase().includes(query)) {
-        return false;
-      }
+    // My projects filter
+    if (showMyProjectsOnly && project.user_id !== userProfile?.id) return false;
+
+    // Open to collaboration filter
+    if (openOnly && project.collaboration_status !== 'open') return false;
+
+    // Category filter (intersection)
+    if (selectedCategories.length > 0) {
+      const categories: string[] = (project as any).categories || [];
+      const intersects = categories.some((c) => selectedCategories.includes(c as ProjectCategory));
+      if (!intersects) return false;
     }
-    
+
+    // Search filter across title, description, tags, categories
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const inTitle = project.title.toLowerCase().includes(q);
+      const inDesc = project.description.toLowerCase().includes(q);
+      const inTags = (project.tags || []).some((t) => t.toLowerCase().includes(q));
+      const inCats = ((project as any).categories || []).some((c: string) => c.toLowerCase().includes(q));
+      if (!(inTitle || inDesc || inTags || inCats)) return false;
+    }
+
     return true;
   });
 
@@ -139,151 +125,180 @@ const ProjectsPage = () => {
   return (
     <div className="min-h-screen bg-secondary p-4">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Ecosystem Projects</h1>
-          <p className="text-secondary-foreground">
-            Create and discover innovative projects in the ecosystem
-          </p>
-        </div>
-
-        <div className="flex space-x-1 mb-6 bg-background rounded-lg p-1">
-          <button
-            onClick={() => setActiveTab('my-projects')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'my-projects'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-secondary-foreground hover:text-foreground'
-            }`}
-          >
-            My Projects ({projects.length}/3)
-          </button>
-          <button
-            onClick={() => setActiveTab('browse')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'browse'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-secondary-foreground hover:text-foreground'
-            }`}
-          >
-            Browse Ecosystem
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('create');
-              setShowForm(true);
-              setEditingProject(undefined);
-            }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'create'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-secondary-foreground hover:text-foreground'
-            }`}
-            disabled={projects.length >= 3}
-          >
-            Create Project
-          </button>
-        </div>
-
-        {activeTab === 'my-projects' && (
+        <div className="flex justify-between items-center mb-8">
           <div>
-            {projects.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-foreground mb-2">No projects yet</h3>
-                <p className="text-secondary-foreground mb-4">
-                  Create your first project to get started
-                </p>
-                <Button
-                  onClick={() => {
-                    setActiveTab('create');
-                    setShowForm(true);
-                  }}
-                >
-                  Create Project
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {projects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    canEdit={true}
-                    onEdit={handleEditProject}
-                    onDelete={handleDeleteProject}
-                  />
-                ))}
-              </div>
-            )}
+            <h1 className="text-3xl font-bold text-foreground mb-2">Ecosystem Projects</h1>
+            <p className="text-secondary-foreground">
+              Create and discover innovative projects in the ecosystem
+            </p>
           </div>
-        )}
+          <Button onClick={handleCreateClick}>
+            Create New Project
+          </Button>
+        </div>
 
-        {activeTab === 'browse' && (
-          <div>
-            <div className="mb-6 space-y-4">
-              <div className="flex gap-4">
+
+
+        {/* Modern Filter Section */}
+        <div className="mb-8">
+          <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search Input */}
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
                 <input
                   type="text"
-                  placeholder="Search projects..."
+                  placeholder="Search projects by name, description..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="block w-full pl-10 pr-3 py-3 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
                 />
-                <select
-                  value={selectedExpertise}
-                  onChange={(e) => setSelectedExpertise(e.target.value)}
-                  className="px-4 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              </div>
+              
+              {/* My Projects Filter */}
+              <div className="lg:w-48">
+                <Button
+                  onClick={() => setShowMyProjectsOnly(!showMyProjectsOnly)}
+                  variant={showMyProjectsOnly ? "default" : "outline"}
+                  className="w-full py-3 h-auto"
                 >
-                  <option value="">All Expertise</option>
-                  {EXPERTISE_OPTIONS.map((expertise) => (
-                    <option key={expertise} value={expertise}>
-                      {expertise}
-                    </option>
-                  ))}
-                </select>
+                  {showMyProjectsOnly ? "✓ My Projects" : "🔍 My Projects"}
+                </Button>
               </div>
-            </div>
 
-            {filteredProjects.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-foreground mb-2">No projects found</h3>
-                <p className="text-secondary-foreground">
-                  Try adjusting your search criteria
-                </p>
+              {/* Open to collaboration */}
+              <div className="lg:w-64">
+                <Button
+                  onClick={() => setOpenOnly((v) => !v)}
+                  variant={openOnly ? 'default' : 'outline'}
+                  className="w-full py-3 h-auto"
+                >
+                  {openOnly ? '✓ Open to Collaboration' : '🤝 Open to Collaboration'}
+                </Button>
               </div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
+              
+              {/* Clear Filters Button */}
+              {(searchQuery || selectedCategories.length > 0 || showMyProjectsOnly || openOnly) && (
+                <Button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategories([]);
+                    setShowMyProjectsOnly(false);
+                    setOpenOnly(false);
+                  }}
+                  variant="outline"
+                  className="px-4 py-3 h-auto"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
+            
+            {/* Active Filters Display */}
+            {(searchQuery || selectedCategories.length > 0 || showMyProjectsOnly || openOnly) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {searchQuery && (
+                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                    <span>Search: "{searchQuery}"</span>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="ml-1 hover:bg-primary/20 rounded-full p-0.5"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {showMyProjectsOnly && (
+                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    <span>My Projects Only</span>
+                    <button
+                      onClick={() => setShowMyProjectsOnly(false)}
+                      className="ml-1 hover:bg-blue-200 rounded-full p-0.5"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {openOnly && (
+                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span>Open to Collaboration</span>
+                    <button onClick={() => setOpenOnly(false)} className="ml-1 hover:bg-green-200 rounded-full p-0.5">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                )}
+                {selectedCategories.map((cat) => (
+                  <div key={cat} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/80 text-secondary-foreground rounded-full text-sm">
+                    <span>{cat}</span>
+                    <button
+                      onClick={() => setSelectedCategories((prev) => prev.filter((c) => c !== cat))}
+                      className="ml-1 hover:bg-secondary rounded-full p-0.5"
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'create' && showForm && (
-          <div>
-            {projects.length >= 3 && !editingProject ? (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-foreground mb-2">Project limit reached</h3>
-                <p className="text-secondary-foreground">
-                  You can only create up to 3 projects. Delete an existing project to create a new one.
-                </p>
-                <Button
-                  onClick={() => setActiveTab('my-projects')}
-                  className="mt-4"
-                >
-                  View My Projects
-                </Button>
-              </div>
-            ) : (
-              <ProjectForm
-                project={editingProject}
-                onCreate={handleCreateProject}
-                onUpdate={handleUpdateProject}
-                onCancel={handleCancelForm}
-                isLoading={isSubmitting}
-              />
+        {/* Category Chips */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          {POPULAR_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat])}
+              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                selectedCategories.includes(cat)
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-foreground border-border hover:border-primary'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Projects Grid */}
+        {filteredProjects.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              {showMyProjectsOnly ? "No projects yet" : "No projects found"}
+            </h3>
+            <p className="text-secondary-foreground mb-4">
+              {showMyProjectsOnly 
+                ? "Create your first project to get started" 
+                : "Try adjusting your search criteria"
+              }
+            </p>
+            {showMyProjectsOnly && (
+              <Button onClick={handleCreateClick}>
+                Create New Project
+              </Button>
             )}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProjects.map((project) => (
+              <ProjectCard 
+                key={project.id} 
+                project={project}
+                canEdit={project.user_id === userProfile?.id}
+                onEdit={project.user_id === userProfile?.id ? () => handleEditProject(project) : undefined}
+                onDelete={project.user_id === userProfile?.id ? () => handleDeleteProject(project.id) : undefined}
+              />
+            ))}
           </div>
         )}
       </div>

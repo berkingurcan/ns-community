@@ -329,7 +329,7 @@ export default function ProfilePage() {
 
               {/* Action Buttons */}
               <div className="flex gap-2 pb-2">
-                <Button onClick={() => router.push('/projects')} className="shadow-lg">
+                <Button onClick={() => router.push('/projects/new')} className="shadow-lg">
                   <Plus className="w-4 h-4 mr-2" /> Create Project
                 </Button>
                 <Button onClick={() => setShowProfileEdit(true)} variant="outline" size="sm">
@@ -495,7 +495,7 @@ export default function ProfilePage() {
                   <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                     Start building your portfolio by creating your first project and showcase your work to the community!
                   </p>
-                  <Button onClick={() => router.push('/projects')} className="flex items-center gap-2">
+                  <Button onClick={() => router.push('/projects/new')} className="flex items-center gap-2">
                     <Plus className="w-4 h-4" />
                     Create Your First Project
                   </Button>

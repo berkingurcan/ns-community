@@ -26,7 +26,7 @@ export function Navigation() {
     if (isAuthorized) {
       return (
         <>
-          <Button onClick={() => router.push('/')} variant="secondary" className="hidden sm:flex items-center gap-2">
+          <Button onClick={() => router.push('/projects')} variant="secondary" className="hidden sm:flex items-center gap-2">
             <Briefcase className="w-4 h-4" />
             Ecosystem
           </Button>

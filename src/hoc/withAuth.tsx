@@ -26,21 +26,22 @@ export default function withAuth(WrappedComponent: React.ComponentType): React.C
         return;
       }
 
-      if (userProfile && userProfile.status === 'needs_onboarding' && isAuthorized === true) {
-        router.push('/onboarding'); // Profile exists but needs onboarding
-        return;
-      }
+      // Note: Onboarding is now optional - users can use the app with incomplete profiles
+      // if (userProfile && userProfile.status === 'needs_onboarding' && isAuthorized === true) {
+      //   router.push('/onboarding'); // Profile exists but needs onboarding
+      //   return;
+      // }
 
-      if (userProfile === null && isAuthorized === true) {
-        // This shouldn't happen anymore since we auto-create profiles
-        router.push('/onboarding');
-        return;
-      }
+      // if (userProfile === null && isAuthorized === true) {
+      //   // This shouldn't happen anymore since we auto-create profiles
+      //   router.push('/onboarding');
+      //   return;
+      // }
 
     }, [loading, session, isAuthorized, userProfile, router]);
 
     // While loading, or if conditions for rendering are not met yet, show a loader.
-    if (loading || !session || isAuthorized !== true || !userProfile || userProfile.status !== 'active') {
+    if (loading || !session || isAuthorized !== true || !userProfile) {
       return <div>Loading...</div>; // Or a more sophisticated loading component
     }
 

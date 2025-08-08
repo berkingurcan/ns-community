@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CoinService } from '@/lib/coins';
+import { CollaborationService } from '@/lib/collaborationService';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -53,6 +54,7 @@ export function CollaborationRequestsDrawer({
   currentUserId
 }: CollaborationRequestsDrawerProps) {
   const { refreshCoinBalance } = useAuth();
+  const [userBalance, setUserBalance] = useState<number | null>(null);
   const [requests, setRequests] = useState<CollaborationRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,95 +63,34 @@ export function CollaborationRequestsDrawer({
   useEffect(() => {
     if (isOpen) {
       loadCollaborationRequests();
+      // Load current user's coin balance for button disable state
+      if (currentUserId) {
+        CoinService.getUserBalance(currentUserId)
+          .then((b) => setUserBalance(b.balance))
+          .catch(() => setUserBalance(null));
+      }
     }
   }, [isOpen]);
 
   const loadCollaborationRequests = async () => {
     try {
       setLoading(true);
-      // TODO: Load collaboration requests from backend
-      // For now, using mock data
-      const mockRequests: CollaborationRequest[] = [
-        {
-          id: '1',
-          projectId: 'project-1',
-          projectTitle: 'NSphere Community Platform',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440001',
-          applicantName: 'John Doe',
-          applicantUsername: 'johndoe',
-          applicantImage: undefined,
-          message: 'Hi! I have 5+ years of experience in React and Node.js. I would love to contribute to your project, especially on the frontend side.',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        },
-        {
-          id: '2',
-          projectId: 'project-1',
-          projectTitle: 'NSphere Community Platform',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440002',
-          applicantName: 'Sarah Wilson',
-          applicantUsername: 'sarahw',
-          applicantImage: undefined,
-          message: 'Excited about this project! I have experience in blockchain development and would love to help with the Web3 integration.',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-        },
-        {
-          id: '3',
-          projectId: 'project-your-main',
-          projectTitle: 'Your Main Project',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440003',
-          applicantName: 'Alex Thompson',
-          applicantUsername: 'alexcrypto',
-          applicantImage: undefined,
-          message: 'Really impressed with your project! I\'ve been working with React and TypeScript for 4 years. Would love to help with the UI/UX improvements.',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-        },
-        {
-          id: '4',
-          projectId: 'project-your-main',
-          projectTitle: 'Your Main Project',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440004',
-          applicantName: 'Jenny Martinez',
-          applicantUsername: 'jennymartinez',
-          applicantImage: undefined,
-          message: 'Hi there! Your project aligns with my interests. I have expertise in backend development and API design. Happy to contribute to this amazing work!',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-        },
-        {
-          id: '5',
-          projectId: 'project-1',
-          projectTitle: 'NSphere Community Platform',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440005',
-          applicantName: 'Mike Rodriguez',
-          applicantUsername: 'mikerod',
-          applicantImage: undefined,
-          message: 'Thanks for accepting my collaboration request! Looking forward to working together on this project.',
-          status: 'accepted',
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-        },
-        {
-          id: '6',
-          projectId: 'project-old',
-          projectTitle: 'Previous Project',
-          projectImage: undefined,
-          applicantId: '550e8400-e29b-41d4-a716-446655440006',
-          applicantName: 'Random User',
-          applicantUsername: 'randomuser',
-          applicantImage: undefined,
-          message: 'Understood, maybe next time!',
-          status: 'rejected',
-          createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
-        }
-      ];
-      setRequests(mockRequests);
+      if (!currentUserId) { setRequests([]); return; }
+      const apiRequests = await CollaborationService.getCollaborationRequests(currentUserId, undefined, 50);
+      const uiRequests: CollaborationRequest[] = apiRequests.map((r) => ({
+        id: r.id,
+        projectId: r.project?.id || r.project_id,
+        projectTitle: r.project?.title || 'Project',
+        projectImage: undefined,
+        applicantId: r.requester?.id || r.requester_id,
+        applicantName: r.requester?.username || 'Member',
+        applicantUsername: r.requester?.discord_username || r.requester?.username || 'member',
+        applicantImage: r.requester?.avatar_url,
+        message: r.intro_message,
+        status: (r.status === 'accepted' ? 'accepted' : r.status === 'denied' ? 'rejected' : 'pending'),
+        createdAt: r.created_at
+      }));
+      setRequests(uiRequests);
     } catch (error: unknown) {
       console.error('Error loading collaboration requests:', error);
     } finally {
@@ -166,6 +107,20 @@ export function CollaborationRequestsDrawer({
         return;
       }
 
+      // Ensure payer (project owner) has at least 1 coin before attempting transfer
+      try {
+        const balance = await CoinService.getUserBalance(currentUserId);
+        if (!balance || balance.balance < 1) {
+          toast.error('Insufficient Continental Coins. You need at least 1 coin to accept a collaboration.');
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not fetch coin balance before transfer:', e);
+        // Proceeding might produce an RPC error; prefer to stop with a friendly message
+        toast.error('Unable to verify your coin balance. Please try again shortly.');
+        return;
+      }
+
       console.log('Accepting request:', requestId);
       
       // Handle coin transfer: applicant gets 1 coin, project owner pays 1 coin
@@ -178,7 +133,9 @@ export function CollaborationRequestsDrawer({
       );
 
       if (!coinTransferResult.success) {
-        toast.error(`Collaboration accepted, but coin transfer failed: ${coinTransferResult.error}`);
+        const reason = coinTransferResult.error || 'Transfer failed';
+        toast.error(reason.includes('Insufficient balance') ? 'Insufficient Continental Coins.' : `Collaboration transfer failed: ${reason}`);
+        return;
       } else {
         console.log('✅ Coin transfer successful:', coinTransferResult.transaction);
         // Refresh coin balance
@@ -186,16 +143,18 @@ export function CollaborationRequestsDrawer({
           refreshCoinBalance();
         }
         toast.success(`🏛️ Continental Transaction Complete!\n\n1 Continental Coin has been transferred to ${request.applicantName}.\n\n"Honor demands payment. The service is rendered, the coin is earned." - The Continental`);
+
+        // Persist request status change only on successful transfer
+        try {
+          await CollaborationService.acceptCollaborationRequest(requestId);
+        } catch (e) {
+          console.error('Error persisting request acceptance:', e);
+          toast.error('Coin transferred, but failed to update request status. Please refresh.');
+        }
       }
 
-      // Update request status
-      setRequests(prev => 
-        prev.map(req => 
-          req.id === requestId 
-            ? { ...req, status: 'accepted' as const }
-            : req
-        )
-      );
+      // Update request status in UI after success
+      setRequests(prev => prev.map(req => req.id === requestId ? { ...req, status: 'accepted' as const } : req));
 
     } catch (error: unknown) {
       console.error('Error accepting request:', error);
@@ -328,7 +287,10 @@ export function CollaborationRequestsDrawer({
                           onClick={() => handleAccept(request.id)}
                           className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
                           size="sm"
-                          title="Sacred Continental Rule: Every collaboration = 1 coin"
+                          title={userBalance !== null && userBalance < 1 
+                            ? 'You need at least 1 Continental Coin to accept.' 
+                            : 'Sacred Continental Rule: Every collaboration = 1 coin'}
+                          disabled={userBalance !== null && userBalance < 1}
                         >
                           <Check className="w-4 h-4 mr-2" />
                           Accept & Collaborate

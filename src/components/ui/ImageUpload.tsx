@@ -54,8 +54,11 @@ export function ImageUpload({
   const handleFileSelect = useCallback(async (file: File) => {
     if (!session?.user?.id) {
       setErrorMessage("You must be logged in to upload an image.");
+      console.error("Image upload failed: No user session found");
       return;
     }
+
+    console.log("Starting image upload for user:", session.user.id);
 
     setErrorMessage(null);
 
@@ -95,7 +98,9 @@ export function ImageUpload({
         }
 
         // Upload to Supabase
+        console.log("Uploading image to Supabase...", { fileSize: fileToUpload.size, fileName: fileToUpload.name });
         const result = await ImageUploadService.uploadImage(fileToUpload, session.user.id);
+        console.log("Image upload successful:", result.url);
         
         // Only clean up and update after successful upload
         if (tempPreviewUrl) {
@@ -216,59 +221,61 @@ export function ImageUpload({
       
       {/* Image Preview */}
       {previewUrl && (
-        <div className="relative inline-block">
-          <NextImage
-            src={previewUrl}
-            alt="Project logo preview"
-            width={128}
-            height={128}
-            className="w-32 h-32 object-cover rounded-lg border-2 border-border"
-          />
-          {!isUploading && !isLoading && (
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={handleRemoveImage}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          )}
-          {isUploading && (
-            <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-              <div className="text-white text-sm">Uploading...</div>
-            </div>
-          )}
+        <div className="flex justify-start">
+          <div className="relative">
+            <NextImage
+              src={previewUrl}
+              alt="Project logo preview"
+              width={128}
+              height={128}
+              className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg border-2 border-border shadow-sm"
+            />
+            {!isUploading && !isLoading && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleRemoveImage}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0 shadow-md"
+                title="Remove image"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                <div className="text-white text-xs sm:text-sm font-medium">Uploading...</div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Upload Area */}
       {!previewUrl && (
+        <div className="w-full">
           <label
             htmlFor="file-upload"
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+            className={`block w-full border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors cursor-pointer ${
               isDragOver
                 ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/50'
+                : 'border-border hover:border-primary/50 hover:bg-muted/20'
             }`}
           >
             <div 
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
             >
-              <div className="mx-auto w-12 h-12 text-muted-foreground flex items-center justify-center">
-                <Upload className="w-8 h-8" />
+              <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground flex items-center justify-center">
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
-              <div>
-                <p className="text-sm text-foreground mb-1">
-                  Drag and drop your logo here, or{' '}
-                  <span
-                    className="text-primary font-semibold hover:underline"
-                  >
-                    browse files
+              <div className="space-y-1">
+                <p className="text-sm text-foreground">
+                  <span className="hidden sm:inline">Drag and drop your logo here, or </span>
+                  <span className="text-primary font-semibold hover:underline">
+                    {isUploading ? 'Uploading...' : 'Choose file'}
                   </span>
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -277,19 +284,21 @@ export function ImageUpload({
               </div>
             </div>
           </label>
+        </div>
       )}
 
       {/* Action Buttons */}
       {previewUrl && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={openFileDialog}
             disabled={isUploading || isLoading}
+            className="text-xs sm:text-sm"
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Change Logo
           </Button>
         </div>
