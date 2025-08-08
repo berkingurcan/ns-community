@@ -89,35 +89,21 @@ INSERT INTO user_profiles (
  'Community manager with experience building and scaling Web3 communities. Managed Discord servers with 10k+ active members.',
  'https://api.dicebear.com/7.x/avataaars/svg?seed=jen',
  ARRAY['Community Management', 'Discord Management', 'Social Media'],
- 'jencomm', 'jen_community', 'active', NOW(), NOW());
+ 'jencomm', 'jen_community', 'active', NOW(), NOW())
+ON CONFLICT DO NOTHING;
 
 -- =============================================
 -- SAMPLE PROJECTS
 -- =============================================
 
+-- Project 1: DeFi Protocol (owner: yamancan)
 INSERT INTO projects (
-  id,
-  user_id,
-  title,
-  description,
-  image_url,
-  github_url,
-  live_url,
-  twitter_url,
-  website_url,
-  tags,
-  status,
-  categories,
-  collaboration_status,
-  looking_for_collaboration,
-  collaboration_description,
-  max_collaborators,
-  current_collaborators,
-  created_at,
-  updated_at
-) VALUES
--- Project 1: DeFi Protocol
-('proj-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+  id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at
+)
+SELECT
+ 'proj-1111-1111-1111-111111111111', up.id,
  'NSphere DeFi Protocol', 
  'A revolutionary DeFi protocol built on Solana that enables community-driven liquidity mining and governance. Features include automated yield farming, flash loans, and DAO governance mechanisms.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=defi',
@@ -131,11 +117,16 @@ INSERT INTO projects (
  'open',
  ARRAY['Smart Contract Development', 'Frontend Development'],
  'Looking for experienced Solana developers and UI/UX designers to help scale our DeFi protocol.',
- 3, 1, NOW() - INTERVAL '30 days', NOW() - INTERVAL '5 days'),
+ 3, 1, NOW() - INTERVAL '30 days', NOW() - INTERVAL '5 days'
+FROM user_profiles up WHERE up.username = 'yamancan'
+ON CONFLICT DO NOTHING;
 
--- Project 2: NFT Marketplace
-('proj-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222',
- 'CreatorSpace NFT Marketplace',
+INSERT INTO projects (
+  id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at
+)
+SELECT 'proj-2222-2222-2222-222222222222', up.id, 'CreatorSpace NFT Marketplace',
  'A next-generation NFT marketplace focused on digital artists and creators. Features include lazy minting, royalty management, and social features for artists to build communities around their work.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=nft',
  'https://github.com/creatorspace/nft-marketplace',
@@ -148,10 +139,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Backend Development', 'Marketing'],
  'Seeking backend engineers and marketing specialists to help grow our artist community.',
- 4, 2, NOW() - INTERVAL '25 days', NOW() - INTERVAL '3 days'),
+ 4, 2, NOW() - INTERVAL '25 days', NOW() - INTERVAL '3 days'
+FROM user_profiles up WHERE up.username = 'alex_builder'
+ON CONFLICT DO NOTHING;
 
 -- Project 3: Web3 Analytics
-('proj-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-3333-3333-3333-333333333333', up.id,
  'ChainInsights Analytics',
  'Advanced blockchain analytics platform providing real-time insights for DeFi protocols, NFT collections, and wallet tracking. Built with machine learning algorithms for predictive analysis.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=analytics',
@@ -165,10 +161,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Data Science', 'Frontend Development'],
  'Looking for data scientists and React developers to enhance our analytics capabilities.',
- 2, 0, NOW() - INTERVAL '20 days', NOW() - INTERVAL '2 days'),
+  2, 0, NOW() - INTERVAL '20 days', NOW() - INTERVAL '2 days'
+FROM user_profiles up WHERE up.username = 'sarah_designs'
+ON CONFLICT DO NOTHING;
 
 -- Project 4: DAO Governance Tool
-('proj-4444-4444-4444-444444444444', '44444444-4444-4444-4444-444444444444',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-4444-4444-4444-444444444444', up.id,
  'GovTools DAO Platform',
  'A comprehensive DAO governance platform that simplifies proposal creation, voting mechanisms, and treasury management. Features multi-signature wallets and automated execution.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=dao',
@@ -182,10 +183,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Smart Contract Development', 'UI/UX Design'],
  'Need smart contract developers and UI/UX designers to improve governance UX.',
- 3, 1, NOW() - INTERVAL '18 days', NOW() - INTERVAL '1 day'),
+  3, 1, NOW() - INTERVAL '18 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'mike_growth'
+ON CONFLICT DO NOTHING;
 
 -- Project 5: Learning Platform
-('proj-5555-5555-5555-555555555555', '55555555-5555-5555-5555-555555555555',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-5555-5555-5555-555555555555', up.id,
  'Web3 Academy',
  'An interactive learning platform for Web3 education. Features hands-on coding challenges, smart contract tutorials, and certification programs for developers entering the Web3 space.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=education',
@@ -199,10 +205,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Content Creation', 'Frontend Development'],
  'Seeking content creators and frontend developers to expand our course library.',
- 5, 3, NOW() - INTERVAL '15 days', NOW() - INTERVAL '1 day'),
+  5, 3, NOW() - INTERVAL '15 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'crypto_dev'
+ON CONFLICT DO NOTHING;
 
 -- Project 6: Privacy Protocol
-('proj-6666-6666-6666-666666666666', '66666666-6666-6666-6666-666666666666',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-6666-6666-6666-666666666666', up.id,
  'PrivacyChain Protocol',
  'A privacy-focused blockchain protocol using zero-knowledge proofs for confidential transactions. Enables private DeFi and confidential smart contract execution.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=privacy',
@@ -216,10 +227,15 @@ INSERT INTO projects (
  'closed',
  ARRAY[],
  'Currently in stealth mode, not seeking collaborators yet.',
- 1, 1, NOW() - INTERVAL '12 days', NOW() - INTERVAL '1 day'),
+  1, 1, NOW() - INTERVAL '12 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'data_alice'
+ON CONFLICT DO NOTHING;
 
 -- Project 7: Social DApp
-('proj-7777-7777-7777-777777777777', '77777777-7777-7777-7777-777777777777',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-7777-7777-7777-777777777777', up.id,
  'DecentralBook',
  'A decentralized social media platform built on Web3 principles. Users own their data, content is stored on IPFS, and creators are rewarded with tokens for engagement.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=social',
@@ -233,10 +249,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Mobile Development', 'Backend Development'],
  'Looking for mobile developers and backend engineers to build our mobile app.',
- 4, 2, NOW() - INTERVAL '10 days', NOW() - INTERVAL '1 day'),
+  4, 2, NOW() - INTERVAL '10 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'content_king'
+ON CONFLICT DO NOTHING;
 
 -- Project 8: Gaming Platform
-('proj-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888888',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-8888-8888-8888-888888888888', up.id,
  'MetaQuest Gaming',
  'A blockchain-based gaming platform where players truly own their in-game assets as NFTs. Features play-to-earn mechanics and cross-game asset interoperability.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=gaming',
@@ -250,10 +271,15 @@ INSERT INTO projects (
  'open',
  ARRAY['Game Development', 'Smart Contract Development'],
  'Seeking game developers and blockchain engineers for our P2E gaming ecosystem.',
- 6, 4, NOW() - INTERVAL '8 days', NOW() - INTERVAL '1 day'),
+  6, 4, NOW() - INTERVAL '8 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'biz_emma'
+ON CONFLICT DO NOTHING;
 
 -- Project 9: Infrastructure Tool
-('proj-9999-9999-9999-999999999999', '99999999-9999-9999-9999-999999999999',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-9999-9999-9999-999999999999', up.id,
  'DevOps3 Infrastructure',
  'Web3-native DevOps tools for deploying and managing decentralized applications. Features automated smart contract deployment, monitoring, and scaling solutions.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=devops',
@@ -267,10 +293,15 @@ INSERT INTO projects (
  'open',
  ARRAY['DevOps', 'Backend Development'],
  'Need DevOps engineers and backend developers to scale our infrastructure tools.',
- 3, 1, NOW() - INTERVAL '6 days', NOW() - INTERVAL '1 day'),
+  3, 1, NOW() - INTERVAL '6 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'sec_expert'
+ON CONFLICT DO NOTHING;
 
 -- Project 10: Community Platform
-('proj-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+INSERT INTO projects (id, user_id, title, description, image_url, github_url, live_url, twitter_url, website_url,
+  tags, status, categories, collaboration_status, looking_for_collaboration, collaboration_description,
+  max_collaborators, current_collaborators, created_at, updated_at)
+SELECT 'proj-aaaa-aaaa-aaaa-aaaaaaaaaaaa', up.id,
  'BuilderHub Community',
  'A community platform specifically designed for Web3 builders to collaborate, share resources, and find co-founders. Features project showcases, skill matching, and bounty boards.',
  'https://api.dicebear.com/7.x/shapes/svg?seed=community',
@@ -284,24 +315,21 @@ INSERT INTO projects (
  'open',
  ARRAY['Community Management', 'Frontend Development'],
  'Looking for community managers and frontend developers to enhance user experience.',
- 4, 2, NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day');
+  4, 2, NOW() - INTERVAL '3 days', NOW() - INTERVAL '1 day'
+FROM user_profiles up WHERE up.username = 'community_jen'
+ON CONFLICT DO NOTHING;
 
 -- =============================================
 -- CONTINENTAL COINS - Give 10 coins to all users
 -- =============================================
 
+-- Give 10 coins to ALL existing users (upsert/increment)
 INSERT INTO user_coin_balances (user_id, balance, total_earned, updated_at)
-VALUES 
-('11111111-1111-1111-1111-111111111111', 10, 10, NOW()),
-('22222222-2222-2222-2222-222222222222', 10, 10, NOW()),
-('33333333-3333-3333-3333-333333333333', 10, 10, NOW()),
-('44444444-4444-4444-4444-444444444444', 10, 10, NOW()),
-('55555555-5555-5555-5555-555555555555', 10, 10, NOW()),
-('66666666-6666-6666-6666-666666666666', 10, 10, NOW()),
-('77777777-7777-7777-7777-777777777777', 10, 10, NOW()),
-('88888888-8888-8888-8888-888888888888', 10, 10, NOW()),
-('99999999-9999-9999-9999-999999999999', 10, 10, NOW()),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 10, 10, NOW());
+SELECT id, 10, 10, NOW() FROM user_profiles
+ON CONFLICT (user_id) DO UPDATE SET
+  balance = user_coin_balances.balance + 10,
+  total_earned = user_coin_balances.total_earned + 10,
+  updated_at = EXCLUDED.updated_at;
 
 -- Create coin transactions for the initial bonus
 INSERT INTO coin_transactions (
@@ -325,72 +353,41 @@ FROM user_coin_balances;
 -- COLLABORATION REQUESTS
 -- =============================================
 
--- Note: We need to check if collaboration_requests table exists
--- This would typically be created by a separate migration
-
--- Sample collaboration requests (assuming table exists)
--- INSERT INTO collaboration_requests (
---   id, project_id, requester_id, project_owner_id, 
---   collaboration_type, intro_message, status, created_at, updated_at
--- ) VALUES
--- ('req-1111-1111-1111-111111111111', 'proj-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111',
---  'Smart Contract Development', 'Hi! I have 3+ years of Solana development experience and would love to contribute to your DeFi protocol. I specialize in AMM implementations and yield farming contracts.', 
---  'pending', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
--- 
--- ('req-2222-2222-2222-222222222222', 'proj-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222',
---  'UI/UX Design', 'Love your NFT marketplace concept! I have extensive experience designing Web3 interfaces and would like to help improve the user experience for artists.', 
---  'accepted', NOW() - INTERVAL '5 days', NOW() - INTERVAL '3 days'),
--- 
--- ('req-3333-3333-3333-333333333333', 'proj-3333-3333-3333-333333333333', '66666666-6666-6666-6666-666666666666', '33333333-3333-3333-3333-333333333333',
---  'Data Science', 'Your analytics platform looks amazing! I have ML experience and would love to contribute to the predictive algorithms. Can we discuss collaboration?', 
---  'pending', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
--- 
--- ('req-4444-4444-4444-444444444444', 'proj-5555-5555-5555-555555555555', '77777777-7777-7777-7777-777777777777', '55555555-5555-5555-5555-555555555555',
---  'Content Creation', 'I run a YouTube channel with 50k+ Web3 subscribers. Would love to create educational content for your Web3 Academy platform!', 
---  'accepted', NOW() - INTERVAL '7 days', NOW() - INTERVAL '4 days'),
--- 
--- ('req-5555-5555-5555-555555555555', 'proj-7777-7777-7777-777777777777', '22222222-2222-2222-2222-222222222222', '77777777-7777-7777-7777-777777777777',
---  'Backend Development', 'Your decentralized social platform is exactly what the world needs! I have experience with IPFS and P2P networks. Let me help build the backend!', 
---  'pending', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days');
+-- Create collaboration requests (aligns with API/routes)
+INSERT INTO collaboration_requests (
+  id, project_id, requester_id, collaboration_type, intro_message, status, created_at, updated_at
+) VALUES
+('req-1111-1111-1111-111111111111', 'proj-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'blockchain-dev', 'Solana/Rust tecrübem var, AMM ve yield modüllerine katkı sunabilirim.', 'pending', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+('req-2222-2222-2222-222222222222', 'proj-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333', 'ui-design', 'NFT pazar yerinizin onboarding akışını iyileştirecek UI/UX önerilerim var.', 'accepted', NOW() - INTERVAL '5 days', NOW() - INTERVAL '3 days'),
+('req-3333-3333-3333-333333333333', 'proj-3333-3333-3333-333333333333', '66666666-6666-6666-6666-666666666666', 'ai-ml', 'Zincir verisinde tahminleme için ML modeli kurabilirim.', 'pending', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+('req-4444-4444-4444-444444444444', 'proj-5555-5555-5555-555555555555', '77777777-7777-7777-7777-777777777777', 'content', 'Web3 Academy için kapsamlı video serisi üretebilirim.', 'accepted', NOW() - INTERVAL '7 days', NOW() - INTERVAL '4 days'),
+('req-5555-5555-5555-555555555555', 'proj-7777-7777-7777-777777777777', '22222222-2222-2222-2222-222222222222', 'backend-dev', 'IPFS ve P2P deneyimim var, sosyal DApp backendine katkı sunabilirim.', 'pending', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+('req-6666-6666-6666-666666666666', 'proj-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', 'gamefi', 'Oyun ekonomisi ve zincir içi varlık yönetimi konusunda destek olabilirim.', 'pending', NOW() - INTERVAL '6 days', NOW() - INTERVAL '6 days'),
+('req-7777-7777-7777-777777777777', 'proj-9999-9999-9999-999999999999', '10101010-1010-1010-1010-101010101010', 'devops', 'K8s ve CI/CD ile altyapıyı ölçeklendirebilirim.', 'pending', NOW() - INTERVAL '2 days', NOW() - INTERVAL '1 days'),
+('req-8888-8888-8888-888888888888', 'proj-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-4444-4444-4444-444444444444', 'community', 'Discord topluluk yönetimi ve etkinlik organizasyonu desteği sunarım.', 'pending', NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days'),
+('req-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'proj-2222-2222-2222-222222222222', '99999999-9999-9999-9999-999999999999', 'security', 'Akıllı sözleşme denetimi ve güvenlik testi yapabilirim.', 'pending', NOW() - INTERVAL '9 days', NOW() - INTERVAL '5 days'),
+('req-cccc-cccc-cccc-cccccccccccc', 'proj-3333-3333-3333-333333333333', '88888888-8888-8888-8888-888888888888', 'business-dev', 'Partnerlik ağımı kullanarak B2B anlaşmalar getirebilirim.', 'pending', NOW() - INTERVAL '8 days', NOW() - INTERVAL '3 days');
 
 -- =============================================
 -- OPPORTUNITIES (if opportunities table exists)
 -- =============================================
 
 -- Sample opportunities related to projects
+-- If you have an opportunities table, uncomment and adapt the following:
 -- INSERT INTO opportunities (
 --   id, project_id, title, description, opportunity_type, 
 --   skills_required, compensation, status, created_at, updated_at
 -- ) VALUES
 -- ('opp-1111-1111-1111-111111111111', 'proj-1111-1111-1111-111111111111',
 --  'Senior Solana Developer', 
---  'We are looking for an experienced Solana developer to help build our AMM and yield farming contracts. This is a paid position with equity options.',
---  'Full-time', ARRAY['Smart Contract Development', 'Solana', 'Rust'],
+--  'AMM ve yield modülleri için deneyimli Solana geliştiricisi.',
+--  'Full-time', ARRAY['Solana', 'Rust'],
 --  '5000 USDC + equity', 'open', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
--- 
 -- ('opp-2222-2222-2222-222222222222', 'proj-2222-2222-2222-222222222222',
 --  'UI/UX Designer for NFT Platform', 
---  'Looking for a creative UI/UX designer to redesign our NFT marketplace interface. Focus on artist onboarding and discovery features.',
---  'Contract', ARRAY['UI/UX Design', 'Figma', 'Web3 UX'],
---  '3000 USDC', 'open', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
--- 
--- ('opp-3333-3333-3333-333333333333', 'proj-3333-3333-3333-333333333333',
---  'Data Scientist - ML Engineer', 
---  'Join our team to build predictive models for DeFi analytics. Experience with time series analysis and blockchain data required.',
---  'Part-time', ARRAY['Data Science', 'Machine Learning', 'Python'],
---  '2500 USDC/month', 'open', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
--- 
--- ('opp-4444-4444-4444-444444444444', 'proj-5555-5555-5555-555555555555',
---  'Content Creator - Web3 Education', 
---  'Create engaging educational content for our Web3 Academy. Video production and teaching experience preferred.',
---  'Contract', ARRAY['Content Creation', 'Video Production', 'Education'],
---  '100 USDC per video', 'filled', NOW() - INTERVAL '10 days', NOW() - INTERVAL '2 days'),
--- 
--- ('opp-5555-5555-5555-555555555555', 'proj-9999-9999-9999-999999999999',
---  'DevOps Engineer - Web3 Infrastructure', 
---  'Help us scale our Web3 DevOps tools. Experience with Kubernetes, Docker, and blockchain infrastructure required.',
---  'Full-time', ARRAY['DevOps', 'Kubernetes', 'Infrastructure'],
---  '6000 USDC + tokens', 'open', NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days');
+--  'NFT pazar yeri deneyimini yeniden tasarlama.',
+--  'Contract', ARRAY['UI/UX', 'Figma'],
+--  '3000 USDC', 'open', NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days');
 
 -- =============================================
 -- SUMMARY

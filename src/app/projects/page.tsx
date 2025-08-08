@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { ProjectService } from '@/lib/projects';
-import { Project, UpdateProjectData, EXPERTISE_OPTIONS } from '@/types/project';
+import { Project, UpdateProjectData, PROJECT_CATEGORIES, POPULAR_CATEGORIES, ProjectCategory } from '@/types/project';
 import withAuth from '@/hoc/withAuth';
 import { toast } from "sonner";
 
@@ -18,7 +18,8 @@ const ProjectsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showMyProjectsOnly, setShowMyProjectsOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedExpertise, setSelectedExpertise] = useState<string>('');
+  const [selectedCategories, setSelectedCategories] = useState<ProjectCategory[]>([]);
+  const [openOnly, setOpenOnly] = useState<boolean>(false);
 
   const loadUserProjects = useCallback(async () => {
     if (!userProfile?.id) return;
@@ -87,26 +88,29 @@ const ProjectsPage = () => {
   };
 
   const filteredProjects = allProjects.filter(project => {
-    // Show only user's projects if filter is active
-    if (showMyProjectsOnly && project.user_id !== userProfile?.id) {
-      return false;
+    // My projects filter
+    if (showMyProjectsOnly && project.user_id !== userProfile?.id) return false;
+
+    // Open to collaboration filter
+    if (openOnly && project.collaboration_status !== 'open') return false;
+
+    // Category filter (intersection)
+    if (selectedCategories.length > 0) {
+      const categories: string[] = (project as any).categories || [];
+      const intersects = categories.some((c) => selectedCategories.includes(c as ProjectCategory));
+      if (!intersects) return false;
     }
-    
-    // Apply search query filter
+
+    // Search filter across title, description, tags, categories
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      if (!project.title.toLowerCase().includes(query) &&
-          !project.description.toLowerCase().includes(query)) {
-        return false;
-      }
+      const q = searchQuery.toLowerCase();
+      const inTitle = project.title.toLowerCase().includes(q);
+      const inDesc = project.description.toLowerCase().includes(q);
+      const inTags = (project.tags || []).some((t) => t.toLowerCase().includes(q));
+      const inCats = ((project as any).categories || []).some((c: string) => c.toLowerCase().includes(q));
+      if (!(inTitle || inDesc || inTags || inCats)) return false;
     }
-    
-    // Apply expertise filter
-    if (selectedExpertise) {
-      // This would need to be implemented based on your project data structure
-      // For now, we'll skip this filter
-    }
-    
+
     return true;
   });
 
@@ -165,37 +169,26 @@ const ProjectsPage = () => {
                   {showMyProjectsOnly ? "✓ My Projects" : "🔍 My Projects"}
                 </Button>
               </div>
-              
-              {/* Expertise Filter */}
+
+              {/* Open to collaboration */}
               <div className="lg:w-64">
-                <div className="relative">
-                  <select
-                    value={selectedExpertise}
-                    onChange={(e) => setSelectedExpertise(e.target.value)}
-                    className="block w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 appearance-none cursor-pointer"
-                  >
-                    <option value="">🎯 All Expertise</option>
-                    {EXPERTISE_OPTIONS.map((expertise) => (
-                      <option key={expertise} value={expertise}>
-                        {expertise}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+                <Button
+                  onClick={() => setOpenOnly((v) => !v)}
+                  variant={openOnly ? 'default' : 'outline'}
+                  className="w-full py-3 h-auto"
+                >
+                  {openOnly ? '✓ Open to Collaboration' : '🤝 Open to Collaboration'}
+                </Button>
               </div>
               
               {/* Clear Filters Button */}
-              {(searchQuery || selectedExpertise || showMyProjectsOnly) && (
+              {(searchQuery || selectedCategories.length > 0 || showMyProjectsOnly || openOnly) && (
                 <Button
                   onClick={() => {
                     setSearchQuery('');
-                    setSelectedExpertise('');
+                    setSelectedCategories([]);
                     setShowMyProjectsOnly(false);
+                    setOpenOnly(false);
                   }}
                   variant="outline"
                   className="px-4 py-3 h-auto"
@@ -206,7 +199,7 @@ const ProjectsPage = () => {
             </div>
             
             {/* Active Filters Display */}
-            {(searchQuery || selectedExpertise || showMyProjectsOnly) && (
+            {(searchQuery || selectedCategories.length > 0 || showMyProjectsOnly || openOnly) && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {searchQuery && (
                   <div className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
@@ -234,11 +227,19 @@ const ProjectsPage = () => {
                     </button>
                   </div>
                 )}
-                {selectedExpertise && (
-                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/80 text-secondary-foreground rounded-full text-sm">
-                    <span>Expertise: {selectedExpertise}</span>
+                {openOnly && (
+                  <div className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <span>Open to Collaboration</span>
+                    <button onClick={() => setOpenOnly(false)} className="ml-1 hover:bg-green-200 rounded-full p-0.5">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                )}
+                {selectedCategories.map((cat) => (
+                  <div key={cat} className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/80 text-secondary-foreground rounded-full text-sm">
+                    <span>{cat}</span>
                     <button
-                      onClick={() => setSelectedExpertise('')}
+                      onClick={() => setSelectedCategories((prev) => prev.filter((c) => c !== cat))}
                       className="ml-1 hover:bg-secondary rounded-full p-0.5"
                     >
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,10 +247,27 @@ const ProjectsPage = () => {
                       </svg>
                     </button>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
+        </div>
+
+        {/* Category Chips */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          {POPULAR_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategories((prev) => prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat])}
+              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                selectedCategories.includes(cat)
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-foreground border-border hover:border-primary'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
         {/* Projects Grid */}
