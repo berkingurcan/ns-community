@@ -282,19 +282,20 @@ export function CollaborationRequestsDrawer({
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button
                           onClick={() => handleAccept(request.id)}
-                          className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+                          className="flex-1 min-w-0 bg-emerald-500 hover:bg-emerald-600 text-white"
                           size="sm"
                           title={userBalance !== null && userBalance < 1 
                             ? 'You need at least 1 Continental Coin to accept.' 
                             : 'Sacred Continental Rule: Every collaboration = 1 coin'}
                           disabled={userBalance !== null && userBalance < 1}
                         >
-                          <Check className="w-4 h-4 mr-2" />
-                          Accept & Collaborate
-                          <div className="ml-2 flex items-center gap-1 bg-emerald-400/30 px-2 py-0.5 rounded text-xs">
+                          <Check className="w-4 h-4 mr-2 shrink-0" />
+                          <span className="inline sm:hidden">Accept</span>
+                          <span className="hidden sm:inline">Accept & Collaborate</span>
+                          <div className="ml-2 hidden sm:flex items-center gap-1 bg-emerald-400/30 px-2 py-0.5 rounded text-xs">
                             <Coins className="w-3 h-3" />
                             <span>-1 Continental</span>
                           </div>
@@ -302,11 +303,12 @@ export function CollaborationRequestsDrawer({
                         <Button
                           onClick={() => handleReject(request.id)}
                           variant="outline"
-                          className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                          className="flex-1 min-w-0 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                           size="sm"
                         >
-                          <X className="w-4 h-4 mr-2" />
-                          Not This Time
+                          <X className="w-4 h-4 mr-2 shrink-0" />
+                          <span className="inline sm:hidden">Reject</span>
+                          <span className="hidden sm:inline">Not This Time</span>
                         </Button>
                       </div>
                     </CardContent>
