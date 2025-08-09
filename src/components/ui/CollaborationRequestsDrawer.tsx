@@ -60,18 +60,6 @@ export function CollaborationRequestsDrawer({
 
   const router = useRouter();
 
-  useEffect(() => {
-    if (isOpen) {
-      loadCollaborationRequests();
-      // Load current user's coin balance for button disable state
-      if (currentUserId) {
-        CoinService.getUserBalance(currentUserId)
-          .then((b) => setUserBalance(b.balance))
-          .catch(() => setUserBalance(null));
-      }
-    }
-  }, [isOpen, currentUserId, loadCollaborationRequests]);
-
   const loadCollaborationRequests = useCallback(async () => {
     try {
       setLoading(true);
@@ -97,6 +85,18 @@ export function CollaborationRequestsDrawer({
       setLoading(false);
     }
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCollaborationRequests();
+      // Load current user's coin balance for button disable state
+      if (currentUserId) {
+        CoinService.getUserBalance(currentUserId)
+          .then((b) => setUserBalance(b.balance))
+          .catch(() => setUserBalance(null));
+      }
+    }
+  }, [isOpen, currentUserId, loadCollaborationRequests]);
 
   const handleAccept = async (requestId: string) => {
     try {
