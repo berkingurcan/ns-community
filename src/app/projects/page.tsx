@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { ProjectService } from '@/lib/projects';
-import { Project, UpdateProjectData, PROJECT_CATEGORIES, POPULAR_CATEGORIES, ProjectCategory } from '@/types/project';
+import { Project, POPULAR_CATEGORIES, ProjectCategory } from '@/types/project';
 import withAuth from '@/hoc/withAuth';
 import { toast } from "sonner";
 
@@ -87,7 +87,7 @@ const ProjectsPage = () => {
     }
   };
 
-  const filteredProjects = allProjects.filter(project => {
+  const filteredProjects = allProjects.filter((project: Project) => {
     // My projects filter
     if (showMyProjectsOnly && project.user_id !== userProfile?.id) return false;
 
@@ -96,8 +96,8 @@ const ProjectsPage = () => {
 
     // Category filter (intersection)
     if (selectedCategories.length > 0) {
-      const categories: string[] = (project as any).categories || [];
-      const intersects = categories.some((c) => selectedCategories.includes(c as ProjectCategory));
+      const categories: ProjectCategory[] = project.categories || [];
+      const intersects = categories.some((c: ProjectCategory) => selectedCategories.includes(c));
       if (!intersects) return false;
     }
 
@@ -107,7 +107,7 @@ const ProjectsPage = () => {
       const inTitle = project.title.toLowerCase().includes(q);
       const inDesc = project.description.toLowerCase().includes(q);
       const inTags = (project.tags || []).some((t) => t.toLowerCase().includes(q));
-      const inCats = ((project as any).categories || []).some((c: string) => c.toLowerCase().includes(q));
+      const inCats = (project.categories || []).some((c: string) => c.toLowerCase().includes(q));
       if (!(inTitle || inDesc || inTags || inCats)) return false;
     }
 
@@ -203,7 +203,7 @@ const ProjectsPage = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {searchQuery && (
                   <div className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                    <span>Search: "{searchQuery}"</span>
+                    <span>Search: &quot;{searchQuery}&quot;</span>
                     <button
                       onClick={() => setSearchQuery('')}
                       className="ml-1 hover:bg-primary/20 rounded-full p-0.5"

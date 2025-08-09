@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { ProjectForm } from '@/components/ui/ProjectForm';
 import { ProjectService } from '@/lib/projects';
-import { CreateProjectData, Project } from '@/types/project';
+import { CreateProjectData } from '@/types/project';
 import withAuth from '@/hoc/withAuth';
 import { toast } from "sonner"
 
@@ -22,7 +22,7 @@ const CreateProjectPage = () => {
 
     setIsSubmitting(true);
     try {
-      const newProject = await ProjectService.createProject(data, userProfile.id);
+      await ProjectService.createProject(data, userProfile.id);
       toast.success('Project created successfully!');
       router.push('/my-projects'); 
     } catch (error) {

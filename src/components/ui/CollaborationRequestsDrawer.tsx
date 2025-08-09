@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Drawer, 
   DrawerContent, 
@@ -70,9 +70,9 @@ export function CollaborationRequestsDrawer({
           .catch(() => setUserBalance(null));
       }
     }
-  }, [isOpen]);
+  }, [isOpen, currentUserId, loadCollaborationRequests]);
 
-  const loadCollaborationRequests = async () => {
+  const loadCollaborationRequests = useCallback(async () => {
     try {
       setLoading(true);
       if (!currentUserId) { setRequests([]); return; }
@@ -96,7 +96,7 @@ export function CollaborationRequestsDrawer({
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUserId]);
 
   const handleAccept = async (requestId: string) => {
     try {
