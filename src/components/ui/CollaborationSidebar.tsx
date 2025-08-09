@@ -281,19 +281,19 @@ function RequestCard({
 
       {/* Actions */}
       {!isAccepted ? (
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             size="sm"
             onClick={onAccept}
             disabled={isProcessing}
-            className="flex-1"
+            className="flex-1 min-w-0"
           >
             {isProcessing ? (
               <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <Check className="w-3 h-3 mr-1" />
-                Accept
+                <Check className="w-3 h-3 mr-1 shrink-0" />
+                <span className="flex-1 truncate">Accept</span>
               </>
             )}
           </Button>
@@ -302,10 +302,10 @@ function RequestCard({
             variant="outline"
             onClick={onDeny}
             disabled={isProcessing}
-            className="flex-1"
+            className="flex-1 min-w-0"
           >
-            <X className="w-3 h-3 mr-1" />
-            Decline
+            <X className="w-3 h-3 mr-1 shrink-0" />
+            <span className="flex-1 truncate">Decline</span>
           </Button>
         </div>
       ) : (

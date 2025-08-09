@@ -293,8 +293,8 @@ export function CollaborationRequestsDrawer({
                           disabled={userBalance !== null && userBalance < 1}
                         >
                           <Check className="w-4 h-4 mr-2 shrink-0" />
-                          <span className="inline sm:hidden">Accept</span>
-                          <span className="hidden sm:inline">Accept & Collaborate</span>
+                          <span className="inline sm:hidden flex-1 truncate">Accept</span>
+                          <span className="hidden sm:inline flex-1 truncate">Accept & Collaborate</span>
                           <div className="ml-2 hidden sm:flex items-center gap-1 bg-emerald-400/30 px-2 py-0.5 rounded text-xs">
                             <Coins className="w-3 h-3" />
                             <span>-1 Continental</span>
@@ -307,8 +307,8 @@ export function CollaborationRequestsDrawer({
                           size="sm"
                         >
                           <X className="w-4 h-4 mr-2 shrink-0" />
-                          <span className="inline sm:hidden">Reject</span>
-                          <span className="hidden sm:inline">Not This Time</span>
+                          <span className="inline sm:hidden flex-1 truncate">Reject</span>
+                          <span className="hidden sm:inline flex-1 truncate">Not This Time</span>
                         </Button>
                       </div>
                     </CardContent>
